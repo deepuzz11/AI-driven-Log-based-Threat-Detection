@@ -1,0 +1,12 @@
+| Feature             | Importance |
+| ------------------- | ---------- |
+| sbytes              | 0.0306     |
+| smean               | 0.0205     |
+| service\_dns        | 0.0184     |
+| ct\_dst\_src\_ltm   | 0.0134     |
+| ct\_src\_dport\_ltm | 0.0123     |
+| dmean               | 0.0088     |
+| synack              | 0.0073     |
+| sttl                | 0.0071     |
+| tcprtt              | 0.0063     |
+| ackdat              | 0.0055     |

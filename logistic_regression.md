@@ -1,0 +1,12 @@
+| Feature      | Importance |
+| ------------ | ---------- |
+| proto\_tcp   | 0.2361     |
+| dttl         | 0.1598     |
+| dwin         | 0.1524     |
+| service\_dns | 0.1427     |
+| state\_INT   | 0.1372     |
+| state\_FIN   | 0.1241     |
+| proto\_udp   | 0.0942     |
+| dpkts        | 0.0805     |
+| swin         | 0.0672     |
+| ct\_srv\_dst | 0.0576     |
