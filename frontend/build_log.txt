@@ -1,0 +1,119 @@
+﻿[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 1767 modules transformed.
+node.exe : 
+[31mΓ£ù[39m Build 
+failed in 12.14s
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : 
+NotSpecified: (    
+[31mΓ£ù[39m Build fa 
+   iled in 
+12.14s:String    ) 
+[], RemoteException
+    + 
+FullyQualifiedError   
+ Id : 
+NativeCommandErr    or
+ 
+[31merror during 
+build:
+[31m[vite:css] 
+[postcss] C:/Users/LEN
+OVO/OneDrive/Desktop/A
+I-driven-Log-based-Thr
+eat-Detection/frontend
+/src/index.css:1725:1:
+ Unexpected }[31m
+file: [36mC:/Users/LE
+NOVO/OneDrive/Desktop/
+AI-driven-Log-based-Th
+reat-Detection/fronten
+d/src/index.css:1725:0
+[31m
+    at Input.error (C:
+\Users\LENOVO\OneDrive
+\Desktop\AI-driven-Log
+-based-Threat-Detectio
+n\frontend\node_module
+s\postcss\lib\input.js
+:135:16)
+    at Parser.unexpect
+edClose (C:\Users\LENO
+VO\OneDrive\Desktop\AI
+-driven-Log-based-Thre
+at-Detection\frontend\
+node_modules\postcss\l
+ib\parser.js:587:22)
+    at Parser.end (C:\
+Users\LENOVO\OneDrive\
+Desktop\AI-driven-Log-
+based-Threat-Detection
+\frontend\node_modules
+\postcss\lib\parser.js
+:330:12)
+    at Parser.parse (C
+:\Users\LENOVO\OneDriv
+e\Desktop\AI-driven-Lo
+g-based-Threat-Detecti
+on\frontend\node_modul
+es\postcss\lib\parser.
+js:456:16)
+    at parse (C:\Users
+\LENOVO\OneDrive\Deskt
+op\AI-driven-Log-based
+-Threat-Detection\fron
+tend\node_modules\post
+css\lib\parse.js:11:12
+)
+    at new LazyResult 
+(C:\Users\LENOVO\OneDr
+ive\Desktop\AI-driven-
+Log-based-Threat-Detec
+tion\frontend\node_mod
+ules\postcss\lib\lazy-
+result.js:165:16)
+    at 
+Processor.process (C:\
+Users\LENOVO\OneDrive\
+Desktop\AI-driven-Log-
+based-Threat-Detection
+\frontend\node_modules
+\postcss\lib\processor
+.js:53:14)
+    at runPostCSS (fil
+e:///C:/Users/LENOVO/O
+neDrive/Desktop/AI-dri
+ven-Log-based-Threat-D
+etection/frontend/node
+_modules/vite/dist/nod
+e/chunks/config.js:301
+45:68)
+    at async 
+compilePostCSS (file:/
+//C:/Users/LENOVO/OneD
+rive/Desktop/AI-driven
+-Log-based-Threat-Dete
+ction/frontend/node_mo
+dules/vite/dist/node/c
+hunks/config.js:30129:
+6)
+    at async 
+compileCSS (file:///C:
+/Users/LENOVO/OneDrive
+/Desktop/AI-driven-Log
+-based-Threat-Detectio
+n/frontend/node_module
+s/vite/dist/node/chunk
+s/config.js:30059:26)
+[39m

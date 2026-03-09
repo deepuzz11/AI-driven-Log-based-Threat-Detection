@@ -237,4 +237,6 @@
     ("cloud_metadata_access", r"\b(169\.254\.169\.254|ec2 metadata request|gce metadata server)\b", "cloud"),
 
     # Suspicious process masquerading
-    ("process_masquerade", r"\b(process masquerading|named like system process but path suspicious)\b", "process"),
+    ("process_masquerade", r"\b(process masquerading|named like system process but path suspicious)\b", "process"),ml_learned_dos_ddos_attacks_1773035530693||\bdos_ddos_attacks\b||dos||HIGH||Auto-learned from ml-fallback — DoS/DDoS Attacks
+ml_learned_malware_backdoor_1773035864400||\bmalware_backdoor\b||malware||HIGH||Auto-learned from ml-fallback — Malware/Backdoor
+ml_learned_malware_backdoor_1773035864400||\bmalware_backdoor\b||malware||HIGH||Auto-learned from ml-fallback — Malware/Backdoor
