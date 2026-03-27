@@ -1,179 +1,292 @@
-# AI-Driven Log-Based Threat Detection
+# 🛡️ AI-Driven Log-Based Threat Detection
 
-## Overview
-
-This project implements machine learning models to detect cyber threats and network intrusions using network activity logs. It compares multiple classification algorithms on the UNSW-NB15 dataset—a comprehensive benchmark dataset for network intrusion detection research.
-
-The project evaluates **four distinct ML approaches** (XGBoost, Random Forest, Logistic Regression, and LDA) to identify the most effective model for distinguishing between normal network behavior and various attack patterns.
-
-## Dataset
-
-**UNSW-NB15** - Australian dataset containing:
-- 257,673 network connection records
-- 49 features capturing network flow characteristics
-- 10 attack categories (DoS, Backdoor, Analysis, Fuzzers, Worms, Shellcode, Reconnaissance, Generic, Exploits, Normal)
-- Real-world network traffic captures from the Cyber Range Lab
-
-**Training & Testing Data:**
-- `UNSW_NB15_training_grouped.csv` - Full training set
-- `UNSW_NB15_testing_grouped.csv` - Full test set
-- `UNSW_NB15_training_grouped_balanced_hybrid.csv` - Balanced training set
-- `UNSW_NB15_testing_balanced_hybrid.csv` - Balanced test set
-
-## Models Evaluated
-
-| Model | Accuracy | Status | Details |
-|-------|----------|--------|---------|
-| **XGBoost** | 0.796 | ✓ Best Performer | Superior F1-score & balanced multi-class performance |
-| **Random Forest** | 0.766 | ✓ Competitive | Slightly lower permutation importance scores |
-| **Logistic Regression** | 0.683 | Used | Convergence warnings; weaker on minority classes |
-| **LDA** | 0.681 | Baseline | Struggles with non-linear decision boundaries |
-
-## Key Findings
-
-- **XGBoost** emerges as the optimal model with superior generalization across all attack categories
-- Ensemble methods (XGBoost, Random Forest) significantly outperform linear approaches
-- Class imbalance mitigation through balanced sampling improves minority class detection
-- Feature engineering through one-hot encoding of categorical variables is critical
-
-## Project Structure
-
-```
-├── main.py                                      # Primary ML pipeline & model training
-├── new_main.py                                  # Alternative implementation
-├── full_final.py                                # Comprehensive analysis workflow
-├── feature_importance.py                        # Feature importance analysis
-├── testing.py                                   # Model evaluation & testing
-├── time_metric.py                               # Performance timing analysis
-│
-├── Models/
-│   ├── best_autoencoder.pt                      # Pre-trained autoencoder
-│   ├── hybrid_ml_model.joblib                   # Serialized best model (XGBoost)
-│   └── label_encoder.joblib                     # Label encoding mapping
-│
-├── Data/
-│   ├── UNSW_NB15_training_grouped.csv           # Full training dataset
-│   ├── UNSW_NB15_testing_grouped.csv            # Full test dataset
-│   ├── UNSW_NB15_training_grouped_balanced_hybrid.csv
-│   └── UNSW_NB15_testing_balanced_hybrid.csv
-│
-├── Reports/
-│   ├── comparison.md                            # Model performance comparison
-│   ├── logistic_regression.md                   # LR model details
-│   ├── random_forest.md                         # RF model details
-│   └── xgboost.md                               # XGBoost model details
-│
-├── feature_importance_plots/                    # Generated feature importance visualizations
-├── sequence_autoencoder_output/                 # Autoencoder analysis outputs
-│
-├── code.ipynb                                   # Jupyter notebook for interactive analysis
-└── README.md                                    # This file
-```
-
-## Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd AI-driven-Log-based-Threat-Detection
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-**Required Libraries:**
-- pandas
-- scikit-learn
-- xgboost
-- joblib
-- numpy
-- matplotlib / seaborn (for visualizations)
-
-## Usage
-
-### Train & Evaluate Models
-
-```bash
-# Run the primary ML pipeline
-python main.py
-
-# Alternative pipeline
-python new_main.py
-
-# Comprehensive analysis
-python full_final.py
-```
-
-### Feature Analysis
-
-```bash
-# Generate feature importance scores and plots
-python feature_importance.py
-```
-
-### Model Testing
-
-```bash
-# Evaluate loaded model on test data
-python testing.py
-
-# Analyze performance timing
-python time_metric.py
-```
-
-### Interactive Analysis
-
-```bash
-# Open Jupyter notebook for exploratory analysis
-jupyter notebook code.ipynb
-```
-
-## Model Pipeline
-
-The ML pipeline follows this workflow:
-
-1. **Data Loading** - Load UNSW-NB15 train/test splits
-2. **Feature Alignment** - Ensure consistent feature matrices
-3. **Preprocessing**:
-   - Numerical features: StandardScaler normalization
-   - Categorical features: OneHotEncoder encoding
-4. **Model Training** - Train XGBoost, Random Forest, LR, and LDA
-5. **Evaluation** - Classification reports, confusion matrices, metrics
-6. **Feature Importance** - Identify most predictive network features
-7. **Serialization** - Save best model and encoders as `.joblib` / `.pt` files
-
-## Performance Metrics
-
-Models are evaluated using:
-- **Accuracy** - Overall correct predictions
-- **Precision & Recall** - Per-class performance
-- **F1-Score** - Harmonic mean of precision/recall
-- **Confusion Matrix** - Class-wise misclassification patterns
-- **ROC-AUC** - Multi-class discrimination capability
-
-## Results & Deployment
-
-- **Best Model**: XGBoost (accuracy: 0.796)
-- **Serialized Model**: `hybrid_ml_model.joblib`
-- **Feature Encoders**: `label_encoder.joblib`
-- **Visualizations**: Feature importance plots in `feature_importance_plots/`
-
-The trained model can be loaded for real-time threat detection on new network logs.
-
-## Future Improvements
-
-- Deep learning architectures (LSTM for sequence analysis)
-- Explainability analysis (SHAP values, LIME)
-- Real-time prediction pipeline deployment
-- Cross-dataset generalization testing
-- Automated hyperparameter optimization
-
-## License
-
-See [LICENSE](LICENSE) file for details.
+> A full-stack, real-time network threat detection platform powered by a hybrid Rule Engine + XGBoost ML pipeline, with a premium React dashboard and a live traffic simulator.
 
 ---
 
-**Author**: AI-Driven Security Analytics  
-**Last Updated**: 2026  
+## 🔍 Overview
+
+This project is an end-to-end **Network Intrusion Detection System (NIDS)** that goes beyond model training. It combines:
+
+- A **Self-Learning Hybrid Analyzer** — a regex-based rule engine with an XGBoost ML fallback that auto-generates new rules from novel attacks.
+- A **Flask REST API** serving analysis endpoints, live SSE streaming, and the frontend.
+- A **React + Vite Dashboard** with glassmorphism UI, interactive charts, cluster visualization, and real-time traffic monitoring.
+- A **Real-Time Log Generator** that simulates live network traffic at configurable event-per-second (EPS) rates.
+
+All trained and evaluated on the **UNSW-NB15** benchmark dataset.
+
+---
+
+## ✨ Key Features
+
+| Feature | Description |
+|---|---|
+| **Hybrid Detection** | Rule engine scans first; unmatched logs fall back to XGBoost ML classification |
+| **Auto Rule Learning** | When the ML model detects a new attack, a regex rule is auto-generated and persisted |
+| **Threat Clustering** | Attacks are grouped into semantic clusters (Active Exploitation, Stealth/Persistence, Generic Anomaly) |
+| **Actionable Remediation** | Each attack category returns a tailored security remediation suggestion |
+| **Live Traffic Stream** | SSE-based real-time log feed from a configurable traffic simulator |
+| **Premium Dashboard** | Dark-themed React UI with glassmorphism, micro-animations, and interactive Chart.js visualizations |
+| **Multi-Page App** | Dashboard, Analytics, Live Traffic, Reports, Integrations, and Settings pages |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     React + Vite Frontend                       │
+│  Dashboard │ Analytics │ Live Traffic │ Reports │ Settings      │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │  REST / SSE
+┌──────────────────────────▼──────────────────────────────────────┐
+│                      Flask API Server                           │
+│  /api/stats  /api/sample  /api/analyze  /api/stream  /api/add  │
+└──────┬──────────────────────────┬───────────────────────────────┘
+       │                          │
+┌──────▼──────┐          ┌────────▼────────┐
+│ Rule Engine │──miss──► │  XGBoost Model  │
+│ (rules.txt) │◄──learn──│  (ML Fallback)  │
+└─────────────┘          └─────────────────┘
+       ▲
+       │ live logs
+┌──────┴──────────────────┐
+│ Real-Time Log Generator │
+│ (generate_logs.py)      │
+└─────────────────────────┘
+```
+
+---
+
+## 📂 Project Structure
+
+```
+AI-driven-Log-based-Threat-Detection/
+│
+├── api_server.py                    # Flask backend — REST API + SSE streaming + frontend serving
+├── hybrid_log_analyzer.py           # Standalone hybrid analyzer (Rule → ML → Auto-learn)
+├── rules.txt                        # Persisted regex rules (auto-learned + manually added)
+│
+├── hybrid_ml_model.joblib           # Serialized XGBoost model
+├── label_encoder.joblib             # Label encoding mapping
+│
+├── main.ipynb                       # ML training & evaluation notebook
+├── diff_group.ipynb                 # Grouped classification analysis notebook
+├── dataset_dist.ipynb               # Dataset distribution analysis notebook
+│
+├── UNSW_NB15_training-set.csv       # Full training dataset
+├── UNSW_NB15_testing-set.csv        # Full test dataset
+├── UNSW_NB15_grouped_training_class.csv
+├── UNSW_NB15_grouped_testing_class.csv
+│
+├── feature_importance_plots_main/   # Feature importance visualizations (main)
+├── feature_importance_plots_diff_grp/ # Feature importance visualizations (grouped)
+│
+├── realtime_log_generator/
+│   ├── generate_logs.py             # Simulates live network traffic at configurable EPS
+│   └── realtime_traffic.log         # Live log output (consumed by SSE stream)
+│
+├── frontend/                        # React + Vite dashboard
+│   ├── src/
+│   │   ├── main.jsx                 # App entry point with React Router
+│   │   ├── App.jsx                  # Root layout with sidebar navigation
+│   │   ├── index.css                # Global styles (glassmorphism dark theme)
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx        # Overview — stats, charts, sample analysis
+│   │   │   ├── Analytics.jsx        # Deep-dive analytics & visualizations
+│   │   │   ├── LiveTraffic.jsx      # Real-time SSE traffic monitor
+│   │   │   ├── Reports.jsx          # Exportable detection reports
+│   │   │   ├── Integrations.jsx     # Third-party integration settings
+│   │   │   └── Settings.jsx         # App configuration
+│   │   └── components/
+│   │       ├── ClusterCard.jsx      # Threat cluster visualization card
+│   │       ├── ExplainPanel.jsx     # ML prediction explainability panel
+│   │       ├── LogViewer.jsx        # Raw log line viewer
+│   │       ├── PipelineTracker.jsx  # Detection pipeline step tracker
+│   │       ├── RuleAddPanel.jsx     # Manual rule creation form
+│   │       ├── SamplePicker.jsx     # Dataset sample selector
+│   │       ├── StatsChart.jsx       # Chart.js-powered statistics
+│   │       ├── SuggestPanel.jsx     # Remediation suggestion display
+│   │       └── VerdictCard.jsx      # Attack/Benign verdict display
+│   ├── package.json
+│   └── vite.config.js
+│
+├── requirements.txt                 # Python dependencies
+├── LICENSE
+└── README.md
+```
+
+---
+
+## 📊 Dataset
+
+**UNSW-NB15** — Australian Centre for Cyber Security benchmark dataset:
+
+- **257,673** network connection records
+- **49** features capturing flow-level characteristics
+- **10** attack categories: DoS, Backdoor, Analysis, Fuzzers, Worms, Shellcode, Reconnaissance, Generic, Exploits, Normal
+- Real-world captures from the Cyber Range Lab at UNSW Canberra
+
+---
+
+## 🤖 Models Evaluated
+
+| Model | Accuracy | F1-Score | Status |
+|---|---|---|---|
+| **XGBoost** | 0.796 | Best | ✅ Deployed in production pipeline |
+| **Random Forest** | 0.766 | Competitive | Evaluated |
+| **Logistic Regression** | 0.683 | Lower | Evaluated |
+| **LDA** | 0.681 | Baseline | Evaluated |
+
+> Ensemble methods (XGBoost, Random Forest) significantly outperform linear approaches for multi-class network intrusion detection.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Python** 3.9+
+- **Node.js** 18+ & npm
+
+### 1. Clone & Install Backend
+
+```bash
+git clone https://github.com/deepuzz11/AI-driven-Log-based-Threat-Detection.git
+cd AI-driven-Log-based-Threat-Detection
+
+pip install -r requirements.txt
+```
+
+### 2. Install & Build Frontend
+
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+```
+
+### 3. Start the API Server
+
+```bash
+python api_server.py
+```
+
+The server starts on `http://localhost:5000` and serves both the API and the React frontend.
+
+### 4. (Optional) Start the Real-Time Log Generator
+
+In a separate terminal:
+
+```bash
+python realtime_log_generator/generate_logs.py --eps 2
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--type` | `json` | Output format: `json`, `text`, or `api` |
+| `--output` | `realtime_traffic.log` | File path or `stdout` |
+| `--eps` | `2.0` | Events per second rate |
+| `--api-url` | `http://localhost:5000/api/analyze` | API endpoint URL |
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/stats` | Dataset statistics & rule count |
+| `GET` | `/api/sample/random?cat=ALL` | Random sample row (optionally by category) |
+| `GET` | `/api/sample/<idx>` | Specific sample by index |
+| `POST` | `/api/analyze` | Analyze a log row (hybrid rule + ML pipeline) |
+| `GET` | `/api/stream` | SSE stream of real-time analyzed logs |
+| `POST` | `/api/add-rule` | Add a custom detection rule |
+
+### Example — Analyze a Log
+
+```bash
+curl -X POST http://localhost:5000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"row": {"dur": 1.0, "proto": "tcp", "service": "http", "sbytes": 5000}}'
+```
+
+**Response** includes: `prediction`, `decision`, `confidence`, `cluster`, `suggestion`, `feature_importance`, `class_probabilities`, and timing metrics.
+
+---
+
+## ⚙️ Detection Pipeline
+
+```
+Incoming Log
+    │
+    ▼
+┌──────────────┐    match    ┌─────────────────┐
+│  Rule Engine │───────────►│  ATTACK verdict  │
+│ (regex scan) │             └─────────────────┘
+└──────┬───────┘
+       │ no match
+       ▼
+┌──────────────┐   attack    ┌─────────────────┐
+│   XGBoost    │───────────►│  ATTACK verdict  │──► Auto-generate rule
+│  ML Model    │             └─────────────────┘
+└──────┬───────┘
+       │ benign
+       ▼
+┌─────────────────┐
+│  BENIGN verdict │
+└─────────────────┘
+```
+
+1. **Rule Engine First** — Fast regex matching against `rules.txt`
+2. **ML Fallback** — XGBoost classification with confidence scores & feature importance
+3. **Auto Rule Learning** — Novel ML-detected attacks are converted into new regex rules for future instant detection
+4. **Cluster & Remediate** — Attacks are grouped into threat clusters with actionable suggestions
+
+---
+
+## 🖥️ Frontend Pages
+
+| Page | Description |
+|---|---|
+| **Dashboard** | Overview stats, attack/benign distribution, sample analysis with full pipeline visualization |
+| **Analytics** | Deep-dive charts, class probability breakdowns, feature importance rankings |
+| **Live Traffic** | Real-time SSE-powered traffic monitor with color-coded verdicts |
+| **Reports** | Detection history and exportable report summaries |
+| **Integrations** | Configuration for third-party security tool integrations |
+| **Settings** | Application preferences and configuration |
+
+---
+
+## 📈 Performance Metrics
+
+Models are evaluated using:
+- **Accuracy** — Overall correct predictions
+- **Precision & Recall** — Per-class performance
+- **F1-Score** — Harmonic mean of precision/recall
+- **Confusion Matrix** — Class-wise misclassification patterns
+- **ROC-AUC** — Multi-class discrimination capability
+- **Inference Time** — Sub-millisecond ML predictions
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **ML Model** | XGBoost, scikit-learn |
+| **Backend** | Flask, Flask-CORS, pandas, numpy |
+| **Frontend** | React 19, Vite 7, React Router, Chart.js, Lucide Icons |
+| **Streaming** | Server-Sent Events (SSE) |
+| **Styling** | Vanilla CSS (glassmorphism dark theme) |
+
+---
+
+## 📜 License
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+**Author**: [deepuzz11](https://github.com/deepuzz11)
 **Dataset Reference**: UNSW-NB15 (Moustafa & Slay, 2015)
