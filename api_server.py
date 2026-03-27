@@ -11,8 +11,9 @@ import random
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, Response
 from flask_cors import CORS
+import json
 
 # ─────────────────────────────────────────────────────────────
 # CONFIG
@@ -224,7 +225,10 @@ def analyze():
     row  = data.get("row", {})
     if not row:
         return jsonify({"error": "No row data provided"}), 400
+    return jsonify(perform_analysis(row))
 
+
+def perform_analysis(row):
     total_start = time.perf_counter()
     log_line    = build_log_string(row)
 
@@ -236,7 +240,7 @@ def analyze():
     if rule_hits:
         cat = rule_hits[0]["category"]
         total_time = time.perf_counter() - total_start
-        return jsonify({
+        return {
             "method":          "rule-based",
             "decision":        "ATTACK",
             "prediction":      cat.upper(),
@@ -250,14 +254,15 @@ def analyze():
             "feature_importance": [],
             "class_probabilities": {},
             "ground_truth":    row.get("attack_cat", ""),
-        })
+            "row":             row
+        }
 
     # Step 2: ML Fallback
     pred, ml_time, conf, feat_imp, class_probs = ml_detect(row)
     is_attack  = pred.lower() not in ("benign", "normal")
     total_time = time.perf_counter() - total_start
 
-    return jsonify({
+    return {
         "method":            "ml-fallback",
         "decision":          "ATTACK" if is_attack else "BENIGN",
         "prediction":        pred,
@@ -271,7 +276,40 @@ def analyze():
         "feature_importance": feat_imp or [],
         "class_probabilities": {k: round(v * 100, 2) for k, v in class_probs.items()},
         "ground_truth":      row.get("attack_cat", ""),
-    })
+        "row":               row
+    }
+
+
+@app.route("/api/stream")
+def stream_logs():
+    def event_stream():
+        log_path = os.path.join(BASE_DIR, "realtime_log_generator", "realtime_traffic.log")
+        
+        # Ensure file exists
+        if not os.path.exists(log_path):
+            with open(log_path, "w") as f:
+                f.write("")
+
+        with open(log_path, "r") as f:
+            # Go to end of file
+            f.seek(0, os.SEEK_END)
+            while True:
+                line = f.readline()
+                if not line:
+                    time.sleep(0.1)
+                    continue
+                
+                try:
+                    # Parse the log line (assuming it's JSON from generate_logs.py)
+                    row = json.loads(line.strip())
+                    analysis = perform_analysis(row)
+                    yield f"data: {json.dumps(analysis)}\n\n"
+                except Exception as e:
+                    # If not JSON, maybe it's raw text? generate_logs.py usually does JSON if requested.
+                    # For now just skip errors.
+                    pass
+
+    return Response(event_stream(), mimetype="text/event-stream")
 
 
 @app.route("/api/add-rule", methods=["POST"])

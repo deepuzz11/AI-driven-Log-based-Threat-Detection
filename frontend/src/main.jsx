@@ -9,6 +9,7 @@ import Analytics from './pages/Analytics.jsx'
 import Reports from './pages/Reports.jsx'
 import Integrations from './pages/Integrations.jsx'
 import Settings from './pages/Settings.jsx'
+import LiveTraffic from './pages/LiveTraffic.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="reports" element={<Reports />} />
           <Route path="integrations" element={<Integrations />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="live" element={<LiveTraffic />} />
         </Route>
       </Routes>
     </BrowserRouter>

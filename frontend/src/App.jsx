@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Shield, Home, BarChart3, FileText, Blocks, Settings, Sun, Moon, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Shield, Home, BarChart3, Activity, FileText, Blocks, Settings, Sun, Moon, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import './index.css'
 
 function App() {
@@ -43,6 +43,7 @@ function App() {
       case '/reports': return 'Incident Reports'
       case '/integrations': return 'System Integrations'
       case '/settings': return 'Platform Settings'
+      case '/live': return 'Live Monitoring'
       default: return 'Dashboard'
     }
   }
@@ -102,6 +103,9 @@ function App() {
             </Link>
             <Link to="/analytics" className={`nav-item ${location.pathname === '/analytics' ? 'active' : ''}`} title="Analytics">
               <BarChart3 size={18} /> <span>Analytics</span>
+            </Link>
+            <Link to="/live" className={`nav-item ${location.pathname === '/live' ? 'active' : ''}`} title="Live Traffic">
+              <Activity size={18} /> <span>Live Traffic</span>
             </Link>
 
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', margin: '20px 12px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Operations</div>
