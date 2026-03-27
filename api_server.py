@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Flask API backend for the Hybrid Log Analyzer.
-Serves the React frontend and provides analysis endpoints.
+FastAPI backend for the Hybrid Log Analyzer.
+Provides analysis endpoints for the React frontend.
 """
 
 import re
@@ -11,9 +11,14 @@ import random
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, jsonify, request, send_from_directory, Response
-from flask_cors import CORS
 import json
+import uvicorn
+
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from typing import Optional
 
 # ─────────────────────────────────────────────────────────────
 # CONFIG
@@ -23,7 +28,6 @@ RULE_FILE          = os.path.join(BASE_DIR, "rules.txt")
 ML_MODEL_PATH      = os.path.join(BASE_DIR, "hybrid_ml_model.joblib")
 LABEL_ENCODER_PATH = os.path.join(BASE_DIR, "label_encoder.joblib")
 TESTING_CSV        = os.path.join(BASE_DIR, "UNSW_NB15_testing-set.csv")
-FRONTEND_DIR       = os.path.join(BASE_DIR, "frontend", "dist")
 
 # ─────────────────────────────────────────────────────────────
 # CLUSTER MAP
@@ -131,7 +135,6 @@ def ml_detect(features):
     try:
         proba = ml_model.predict_proba(df)[0]
         conf  = float(np.max(proba)) * 100
-        # all class probabilities
         class_probs = {label_encoder.inverse_transform([i])[0]: float(p)
                        for i, p in enumerate(proba)}
         if hasattr(ml_model, "feature_importances_"):
@@ -171,61 +174,73 @@ load_rules()
 print(f"[API] Loaded {len(patterns)} rules.")
 
 # ─────────────────────────────────────────────────────────────
-# FLASK APP
+# FASTAPI APP
 # ─────────────────────────────────────────────────────────────
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
-CORS(app)
+app = FastAPI(title="Hybrid Log Analyzer API", version="2.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@app.route("/api/stats")
+# ─── Pydantic models ─────────────────────────────────────────
+
+class AnalyzeRequest(BaseModel):
+    row: dict
+
+class AddRuleRequest(BaseModel):
+    name: str
+    regex: str
+    category: str
+    severity: str = "HIGH"
+    remedy: str = "Auto-learned anomaly."
+
+
+# ─── Helper to sanitize numpy types ──────────────────────────
+
+def _sanitize_row(row: dict) -> dict:
+    return {k: (int(v) if isinstance(v, (np.integer,)) else
+                float(v) if isinstance(v, (np.floating,)) else
+                str(v) if pd.isna(v) else v)
+            for k, v in row.items()}
+
+
+# ─── Endpoints ────────────────────────────────────────────────
+
+@app.get("/api/stats")
 def stats():
     total   = len(TEST_DF)
     attacks = int((TEST_DF["label"] == 1).sum())
     benign  = total - attacks
     cats    = sorted(TEST_DF["attack_cat"].dropna().unique().tolist())
-    return jsonify({"total": total, "attacks": attacks, "benign": benign,
-                    "categories": cats, "rules_count": len(patterns)})
+    return {"total": total, "attacks": attacks, "benign": benign,
+            "categories": cats, "rules_count": len(patterns)}
 
 
-@app.route("/api/sample/random")
-def sample_random():
-    cat = request.args.get("cat", "ALL")
+@app.get("/api/sample/random")
+def sample_random(cat: str = Query("ALL")):
     if cat == "ALL":
         subset = TEST_DF
     else:
         subset = TEST_DF[TEST_DF["attack_cat"] == cat]
     if subset.empty:
-        return jsonify({"error": f"No rows for category '{cat}'"}), 404
-    iloc_idx  = random.randint(0, len(subset) - 1)
+        raise HTTPException(status_code=404, detail=f"No rows for category '{cat}'")
+    iloc_idx   = random.randint(0, len(subset) - 1)
     actual_idx = int(subset.index[iloc_idx])
-    row = subset.iloc[iloc_idx].to_dict()
-    # Convert numpy types to native Python
-    row = {k: (int(v) if isinstance(v, (np.integer,)) else
-               float(v) if isinstance(v, (np.floating,)) else
-               str(v) if pd.isna(v) else v)
-           for k, v in row.items()}
-    return jsonify({"index": actual_idx, "row": row})
+    row = _sanitize_row(subset.iloc[iloc_idx].to_dict())
+    return {"index": actual_idx, "row": row}
 
 
-@app.route("/api/sample/<int:idx>")
-def sample_by_index(idx):
+@app.get("/api/sample/{idx}")
+def sample_by_index(idx: int):
     if idx < 0 or idx >= len(TEST_DF):
-        return jsonify({"error": "Index out of range"}), 400
-    row = TEST_DF.iloc[idx].to_dict()
-    row = {k: (int(v) if isinstance(v, (np.integer,)) else
-               float(v) if isinstance(v, (np.floating,)) else
-               str(v) if pd.isna(v) else v)
-           for k, v in row.items()}
-    return jsonify({"index": idx, "row": row})
-
-
-@app.route("/api/analyze", methods=["POST"])
-def analyze():
-    data = request.get_json()
-    row  = data.get("row", {})
-    if not row:
-        return jsonify({"error": "No row data provided"}), 400
-    return jsonify(perform_analysis(row))
+        raise HTTPException(status_code=400, detail="Index out of range")
+    row = _sanitize_row(TEST_DF.iloc[idx].to_dict())
+    return {"index": idx, "row": row}
 
 
 def perform_analysis(row):
@@ -280,68 +295,53 @@ def perform_analysis(row):
     }
 
 
-@app.route("/api/stream")
+@app.post("/api/analyze")
+def analyze(body: AnalyzeRequest):
+    if not body.row:
+        raise HTTPException(status_code=400, detail="No row data provided")
+    return perform_analysis(body.row)
+
+
+@app.get("/api/stream")
 def stream_logs():
     def event_stream():
         log_path = os.path.join(BASE_DIR, "realtime_log_generator", "realtime_traffic.log")
-        
-        # Ensure file exists
+
         if not os.path.exists(log_path):
             with open(log_path, "w") as f:
                 f.write("")
 
         with open(log_path, "r") as f:
-            # Go to end of file
             f.seek(0, os.SEEK_END)
             while True:
                 line = f.readline()
                 if not line:
                     time.sleep(0.1)
                     continue
-                
                 try:
-                    # Parse the log line (assuming it's JSON from generate_logs.py)
                     row = json.loads(line.strip())
                     analysis = perform_analysis(row)
                     yield f"data: {json.dumps(analysis)}\n\n"
-                except Exception as e:
-                    # If not JSON, maybe it's raw text? generate_logs.py usually does JSON if requested.
-                    # For now just skip errors.
+                except Exception:
                     pass
 
-    return Response(event_stream(), mimetype="text/event-stream")
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@app.route("/api/add-rule", methods=["POST"])
-def add_rule():
-    data    = request.get_json()
-    name    = data.get("name", "").strip()
-    regex   = data.get("regex", "").strip()
-    cat     = data.get("category", "").strip()
-    sev     = data.get("severity", "HIGH").strip()
-    remedy  = data.get("remedy", "Auto-learned anomaly.").strip()
-    if not name or not regex or not cat:
-        return jsonify({"error": "name, regex, and category are required"}), 400
+@app.post("/api/add-rule")
+def add_rule(body: AddRuleRequest):
+    if not body.name or not body.regex or not body.category:
+        raise HTTPException(status_code=400, detail="name, regex, and category are required")
     try:
-        re.compile(regex)
+        re.compile(body.regex)
     except re.error as e:
-        return jsonify({"error": f"Invalid regex: {e}"}), 400
-    added = add_rule_to_file(name, regex, cat, sev, remedy)
-    return jsonify({"added": added, "rules_count": len(patterns)})
+        raise HTTPException(status_code=400, detail=f"Invalid regex: {e}")
+    added = add_rule_to_file(body.name, body.regex, body.category, body.severity, body.remedy)
+    return {"added": added, "rules_count": len(patterns)}
 
 
-# Serve React frontend
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    # If the requested path is not an API route and not a file that exists,
-    # serve the main index.html file so React Router can handle it.
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
-
-
+# ─────────────────────────────────────────────────────────────
+# ENTRYPOINT
+# ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=False, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
