@@ -38,7 +38,7 @@ export default function Settings() {
 
                         <div className="form-group">
                             <label className="form-label">Backend URL Endpoint</label>
-                            <input type="text" className="form-input" defaultValue="http://localhost:5000/api" style={{ width: '100%', boxSizing: 'border-box' }} />
+                            <input type="text" className="form-input" defaultValue="http://localhost:8000/api" style={{ width: '100%', boxSizing: 'border-box' }} />
                         </div>
 
                         <div className="form-group">
