@@ -1,10 +1,10 @@
-# 🛡️ AI-Driven Log-Based Threat Detection
+# AI-Driven Log-Based Threat Detection
 
 > A full-stack, real-time network threat detection platform powered by a hybrid Rule Engine + XGBoost ML pipeline, with a premium React dashboard and a live traffic simulator.
 
 ---
 
-## 🔍 Overview
+## Overview
 
 This project is an end-to-end **Network Intrusion Detection System (NIDS)** that goes beyond model training. It combines:
 
@@ -17,7 +17,7 @@ All trained and evaluated on the **UNSW-NB15** benchmark dataset.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 | Feature | Description |
 |---|---|
@@ -31,7 +31,7 @@ All trained and evaluated on the **UNSW-NB15** benchmark dataset.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -58,7 +58,7 @@ All trained and evaluated on the **UNSW-NB15** benchmark dataset.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 AI-driven-Log-based-Threat-Detection/
@@ -118,7 +118,7 @@ AI-driven-Log-based-Threat-Detection/
 
 ---
 
-## 📊 Dataset
+## Dataset
 
 **UNSW-NB15** — Australian Centre for Cyber Security benchmark dataset:
 
@@ -129,7 +129,7 @@ AI-driven-Log-based-Threat-Detection/
 
 ---
 
-## 🤖 Models Evaluated
+## Models Evaluated
 
 | Model | Accuracy | F1-Score | Status |
 |---|---|---|---|
@@ -142,7 +142,7 @@ AI-driven-Log-based-Threat-Detection/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -192,7 +192,7 @@ python realtime_log_generator/generate_logs.py --eps 2
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -215,7 +215,7 @@ curl -X POST http://localhost:5000/api/analyze \
 
 ---
 
-## ⚙️ Detection Pipeline
+## Detection Pipeline
 
 ```
 Incoming Log
@@ -245,7 +245,7 @@ Incoming Log
 
 ---
 
-## 🖥️ Frontend Pages
+## Frontend Pages
 
 | Page | Description |
 |---|---|
@@ -258,7 +258,7 @@ Incoming Log
 
 ---
 
-## 📈 Performance Metrics
+## Performance Metrics
 
 Models are evaluated using:
 - **Accuracy** — Overall correct predictions
@@ -270,7 +270,7 @@ Models are evaluated using:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -282,7 +282,7 @@ Models are evaluated using:
 
 ---
 
-## 📜 License
+## MIT License
 
 See [LICENSE](LICENSE) for details.
 
