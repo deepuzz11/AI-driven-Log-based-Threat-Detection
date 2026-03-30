@@ -9,7 +9,7 @@
 This project is an end-to-end **Network Intrusion Detection System (NIDS)** that goes beyond model training. It combines:
 
 - A **Self-Learning Hybrid Analyzer** — a regex-based rule engine with an XGBoost ML fallback that auto-generates new rules from novel attacks.
-- A **Flask REST API** serving analysis endpoints, live SSE streaming, and the frontend.
+- A **FastAPI Server** serving analysis endpoints, live SSE streaming, and the frontend.
 - A **React + Vite Dashboard** with glassmorphism UI, interactive charts, cluster visualization, and real-time traffic monitoring.
 - A **Real-Time Log Generator** that simulates live network traffic at configurable event-per-second (EPS) rates.
 
@@ -40,7 +40,7 @@ All trained and evaluated on the **UNSW-NB15** benchmark dataset.
 └──────────────────────────┬──────────────────────────────────────┘
                            │  REST / SSE
 ┌──────────────────────────▼──────────────────────────────────────┐
-│                      Flask API Server                           │
+│                      FastAPI Server                             │
 │  /api/stats  /api/sample  /api/analyze  /api/stream  /api/add  │
 └──────┬──────────────────────────┬───────────────────────────────┘
        │                          │
@@ -63,7 +63,7 @@ All trained and evaluated on the **UNSW-NB15** benchmark dataset.
 ```
 AI-driven-Log-based-Threat-Detection/
 │
-├── api_server.py                    # Flask backend — REST API + SSE streaming + frontend serving
+├── api_server.py                    # FastAPI backend — REST API + SSE streaming + frontend serving
 ├── hybrid_log_analyzer.py           # Standalone hybrid analyzer (Rule → ML → Auto-learn)
 ├── rules.txt                        # Persisted regex rules (auto-learned + manually added)
 │
@@ -170,10 +170,11 @@ cd ..
 ### 3. Start the API Server
 
 ```bash
-python api_server.py
+uvicorn api_server:app --host 0.0.0.0 --port 8000
+# OR you can just run: python api_server.py
 ```
 
-The server starts on `http://localhost:5000` and serves both the API and the React frontend.
+The server starts on `http://localhost:8000` and serves both the API and the React frontend requests.
 
 ### 4. (Optional) Start the Real-Time Log Generator
 
@@ -188,7 +189,7 @@ python realtime_log_generator/generate_logs.py --eps 2
 | `--type` | `json` | Output format: `json`, `text`, or `api` |
 | `--output` | `realtime_traffic.log` | File path or `stdout` |
 | `--eps` | `2.0` | Events per second rate |
-| `--api-url` | `http://localhost:5000/api/analyze` | API endpoint URL |
+| `--api-url` | `http://localhost:8000/api/analyze` | API endpoint URL |
 
 ---
 
@@ -206,7 +207,7 @@ python realtime_log_generator/generate_logs.py --eps 2
 ### Example — Analyze a Log
 
 ```bash
-curl -X POST http://localhost:5000/api/analyze \
+curl -X POST http://localhost:8000/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"row": {"dur": 1.0, "proto": "tcp", "service": "http", "sbytes": 5000}}'
 ```
@@ -275,7 +276,7 @@ Models are evaluated using:
 | Layer | Technology |
 |---|---|
 | **ML Model** | XGBoost, scikit-learn |
-| **Backend** | Flask, Flask-CORS, pandas, numpy |
+| **Backend** | FastAPI, Uvicorn, pandas, numpy |
 | **Frontend** | React 19, Vite 7, React Router, Chart.js, Lucide Icons |
 | **Streaming** | Server-Sent Events (SSE) |
 | **Styling** | Vanilla CSS (glassmorphism dark theme) |

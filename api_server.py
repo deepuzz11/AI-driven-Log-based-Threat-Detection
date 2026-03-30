@@ -317,6 +317,7 @@ def stream_logs():
                 line = f.readline()
                 if not line:
                     time.sleep(0.1)
+                    f.seek(f.tell())
                     continue
                 try:
                     row = json.loads(line.strip())

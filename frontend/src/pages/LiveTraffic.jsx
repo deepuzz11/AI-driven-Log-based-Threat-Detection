@@ -4,39 +4,15 @@ import {
     ArrowRight, Terminal, Search, Trash2,
     Play, Square, AlertTriangle, ShieldCheck
 } from 'lucide-react'
-import {
-    Chart as ChartJS, CategoryScale, LinearScale,
-    PointElement, LineElement, Title, Tooltip,
-    Legend, Filler
-} from 'chart.js'
-import { Line } from 'react-chartjs-2'
-
-ChartJS.register(
-    CategoryScale, LinearScale, PointElement,
-    LineElement, Title, Tooltip, Legend, Filler
-)
 
 export default function LiveTraffic() {
     const [logs, setLogs] = useState([])
     const [isScanning, setIsScanning] = useState(false)
     const [totalEvents, setTotalEvents] = useState(0)
-    const [chartData, setChartData] = useState({
-        labels: Array(20).fill(''),
-        datasets: [{
-            label: 'Events Per Second',
-            data: Array(20).fill(0),
-            borderColor: 'rgba(59, 130, 246, 1)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0
-        }]
-    })
 
     const logContainerRef = useRef(null)
     const eventSourceRef = useRef(null)
     const logCounter = useRef(0)
-    const epsBuffer = useRef(0)
 
     // Helper to generate consistent fake IPs for IDs
     const getFakeIPs = (id) => {
@@ -97,62 +73,27 @@ export default function LiveTraffic() {
         })
 
         setTotalEvents(prev => prev + 1)
-        epsBuffer.current += 1
-    }, [])
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setChartData(prev => {
-                const newData = [...prev.datasets[0].data.slice(1), epsBuffer.current]
-                const newLabels = [...prev.labels.slice(1), new Date().toLocaleTimeString([], { second: '2-digit' })]
-                epsBuffer.current = 0
-                return {
-                    ...prev,
-                    labels: newLabels,
-                    datasets: [{ ...prev.datasets[0], data: newData }]
-                }
-            })
-        }, 1000)
-        return () => clearInterval(interval)
     }, [])
 
     const clearLogs = () => setLogs([])
 
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 0 },
-        plugins: { legend: { display: false }, tooltip: { enabled: true } },
-        scales: {
-            x: { display: false },
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#71717a', font: { size: 10 } }
-            }
-        }
-    }
-
     return (
         <div className="live-traffic-page" style={{
-            height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            animation: 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+            gap: '24px',
+            animation: 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+            minHeight: '100%'
         }}>
 
-            {/* ── STICKY HEADER ── */}
+            {/* ── HEADER ── */}
             <div className="live-header card glass-panel slide-down" style={{
-                position: 'sticky',
-                top: '-32px', // Offset for app-main padding
-                zIndex: 100,
+                flexShrink: 0,
                 padding: '24px',
-                margin: '-32px -32px 24px -32px', // Bleed into padding
-                borderRadius: '0',
                 background: 'rgba(5, 5, 7, 0.85)',
                 backdropFilter: 'blur(32px) saturate(180%)',
-                borderBottom: '1px solid var(--border-bright)',
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4)'
+                border: '1px solid var(--border-bright)',
+                borderRadius: '16px'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
                     <div>
@@ -176,10 +117,6 @@ export default function LiveTraffic() {
                                 <span className="stat-label">TOTAL TRAFFIC</span>
                                 <span className="stat-value">{totalEvents.toLocaleString()}</span>
                             </div>
-                            <div className="stat-pill">
-                                <span className="stat-label">VELOCITY</span>
-                                <span className="stat-value" style={{ color: 'var(--accent-blue)' }}>{chartData.datasets[0].data[19]} EPS</span>
-                            </div>
                         </div>
 
                         <div className="btn-group" style={{ display: 'flex', gap: '12px' }}>
@@ -201,26 +138,7 @@ export default function LiveTraffic() {
             </div>
 
             {/* ── MAIN CONTENT ── */}
-            <div className="live-content slide-up stagger-1" style={{ flex: 1, maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
-
-                {/* ── CHART PANEL ── */}
-                <div className="card glass-panel" style={{
-                    padding: '24px',
-                    marginBottom: '24px',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%)',
-                    border: '1px solid var(--border-bright)'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div className="icon-box-blue"><Activity size={16} /></div>
-                            <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Traffic Velocity (EPS)</span>
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Real-time 1s Window</div>
-                    </div>
-                    <div style={{ height: '160px' }}>
-                        <Line data={chartData} options={chartOptions} />
-                    </div>
-                </div>
+            <div className="live-content slide-up stagger-1" style={{ flex: 1, maxWidth: '1600px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                 {/* ── LOG TERMINAL ── */}
                 <div className="log-terminal card glass-panel slide-up stagger-2" style={{
@@ -245,8 +163,8 @@ export default function LiveTraffic() {
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                         position: 'sticky',
-                        top: '102px', // Adjusted for bleached sticky header
-                        zIndex: 50,
+                        top: 0,
+                        zIndex: 10,
                         backdropFilter: 'blur(10px)'
                     }}>
                         <span>Timestamp</span>

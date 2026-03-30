@@ -117,7 +117,7 @@ if __name__ == "__main__":
                         help="Output target destination: 'stdout' or a file path. (Default: realtime_log_generator/realtime_traffic.log)")
     parser.add_argument("--eps", type=float, default=2.0, 
                         help="Events Per Second (EPS) target rate. (Default: 2.0)")
-    parser.add_argument("--api-url", default="http://localhost:5000/api/analyze",
+    parser.add_argument("--api-url", default="http://localhost:8000/api/analyze",
                         help="URL of the log analyzer API (used only if --type is 'api').")
     
     args = parser.parse_args()
