@@ -287,7 +287,6 @@ export default function Dashboard() {
                             {activeTab === 'deepdive' && (
                                 <div className="results-grid fade-in-scale">
                                     <ExplainPanel result={result} />
-                                    <SuggestPanel result={result} sample={sample} />
                                 </div>
                             )}
 
