@@ -342,17 +342,17 @@ export default function LiveTraffic() {
                                             fontWeight: 600,
                                             padding: '3px 8px',
                                             borderRadius: '4px',
-                                            background: log.detection_method === 'RULE' 
+                                            background: log.method?.includes('rule') 
                                                 ? 'rgba(168, 85, 247, 0.15)' 
                                                 : 'rgba(59, 130, 246, 0.15)',
-                                            color: log.detection_method === 'RULE' 
+                                            color: log.method?.includes('rule') 
                                                 ? 'var(--accent-purple)' 
                                                 : 'var(--accent-blue)',
-                                            border: `1px solid ${log.detection_method === 'RULE' 
+                                            border: `1px solid ${log.method?.includes('rule') 
                                                 ? 'rgba(168, 85, 247, 0.3)' 
                                                 : 'rgba(59, 130, 246, 0.3)'}`
                                         }}>
-                                            {log.detection_method === 'RULE' ? '📋 RULE' : '🤖 ML'}
+                                            {log.method?.includes('rule') ? '📋 RULE' : '🤖 ML'}
                                         </span>
                                     </div>
 
@@ -377,8 +377,8 @@ export default function LiveTraffic() {
                                             flex: 1
                                         }}>
                                             {log.decision === 'ATTACK' 
-                                                ? `${log.prediction} (${(log.confidence * 100).toFixed(0)}%)` 
-                                                : `Normal traffic (${(log.confidence * 100).toFixed(0)}% safe)`}
+                                                ? `${log.prediction} (${log.confidence?.toFixed(0) || 100}%)` 
+                                                : `Benign (${log.confidence?.toFixed(0) || 99}% safe)`}
                                         </div>
                                     </div>
                                 </div>

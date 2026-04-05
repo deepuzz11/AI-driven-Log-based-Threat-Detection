@@ -1,0 +1,102 @@
+{
+  "method": "rule-based",
+  "decision": "ATTACK",
+  "prediction": "EXPLOITS",
+  "rule_hits": [
+    {
+      "rule": "category_exploits",
+      "category": "exploits",
+      "severity": "MEDIUM",
+      "remedy": "Investigate suspicious activity."
+    },
+    {
+      "rule": "realtime_learned_exploits_1775385399",
+      "category": "EXPLOITS",
+      "severity": "MEDIUM",
+      "remedy": "Investigate suspicious activity."
+    },
+    {
+      "rule": "realtime_learned_exploits_1775385405",
+      "category": "EXPLOITS",
+      "severity": "MEDIUM",
+      "remedy": "Investigate suspicious activity."
+    },
+    {
+      "rule": "realtime_learned_exploits_1775385407",
+      "category": "EXPLOITS",
+      "severity": "MEDIUM",
+      "remedy": "Investigate suspicious activity."
+    },
+    {
+      "rule": "realtime_learned_exploits_1775385410",
+      "category": "EXPLOITS",
+      "severity": "MEDIUM",
+      "remedy": "Investigate suspicious activity."
+    }
+  ],
+  "cluster": {
+    "cluster": 1,
+    "label": "Cluster 1 \u2014 Active Exploitation",
+    "description": "Active exploitation \u2014 shellcode, fuzzing, exploit kits, recon probes, worm propagation."
+  },
+  "suggestion": "Apply CVE patches immediately. Deploy WAF rules. Isolate the affected host and perform forensic analysis.",
+  "rule_time_ms": 1.36,
+  "ml_time_ms": 0,
+  "total_time_ms": 1.41,
+  "confidence": 100.0,
+  "feature_importance": [],
+  "class_probabilities": {},
+  "ground_truth": "Exploits",
+  "row": {
+    "timestamp": 1775385429.4937685,
+    "src_ip": "192.168.172.141",
+    "dst_ip": "160.171.31.149",
+    "src_port": 53,
+    "dst_port": 3306,
+    "proto": "udp",
+    "service": "dhcp",
+    "state": "ECO",
+    "id": 26776,
+    "dur": 0.0,
+    "spkts": 1,
+    "dpkts": 19,
+    "sbytes": 2515,
+    "dbytes": 111401,
+    "rate": 53738.255985043106,
+    "sttl": 212,
+    "dttl": 134,
+    "sload": 393914774.11413187,
+    "dload": 0.0,
+    "sloss": 72,
+    "dloss": 0,
+    "sinpkt": 0.0,
+    "dinpkt": 1153.0211958309646,
+    "sjit": 49951.12770509912,
+    "djit": 1389.7537643441879,
+    "swin": 35,
+    "stcpb": 999184357,
+    "dtcpb": 1984716202,
+    "dwin": 170,
+    "tcprtt": 0.10064596857244268,
+    "synack": 0.0,
+    "ackdat": 0.0,
+    "smean": 145,
+    "dmean": 146,
+    "trans_depth": 0,
+    "response_body_len": 0,
+    "ct_srv_src": 1,
+    "ct_state_ttl": 1,
+    "ct_dst_ltm": 8,
+    "ct_src_dport_ltm": 6,
+    "ct_dst_sport_ltm": 1,
+    "ct_dst_src_ltm": 1,
+    "is_ftp_login": 0,
+    "ct_ftp_cmd": 0,
+    "ct_flw_http_mthd": 0,
+    "ct_src_ltm": 14,
+    "ct_srv_dst": 9,
+    "is_sm_ips_ports": 0,
+    "label": 1,
+    "attack_cat": "Exploits"
+  }
+}

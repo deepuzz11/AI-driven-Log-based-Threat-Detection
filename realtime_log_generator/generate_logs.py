@@ -9,7 +9,7 @@ import requests
 
 # Set path relative to the script location (parent project root directory)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TESTING_CSV = os.path.join(BASE_DIR, "UNSW_NB15_testing-set.csv")
+TESTING_CSV = os.path.join(BASE_DIR, "data_processing", "datasets", "UNSW_NB15_testing-set.csv")
 
 PROTOCOLS = ['tcp', 'udp', 'icmp', 'igmp', 'ospf', 'arp', 'gre']
 SERVICES = ['-', 'http', 'ftp', 'ftp-data', 'smtp', 'ssh', 'dns', 'dhcp']
@@ -82,8 +82,30 @@ class SyntheticLogGenerator:
         else:
             return int(value)
     
+    def _generate_ip(self):
+        """Generate a realistic IPv4 address."""
+        # Mix of private and public IPs
+        if random.random() < 0.4:
+            # Private IP ranges
+            return f"192.168.{random.randint(0, 255)}.{random.randint(1, 254)}"
+        elif random.random() < 0.5:
+            return f"10.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
+        else:
+            # Public IP-like addresses
+            return f"{random.randint(1, 223)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
+    
+    def _generate_port(self):
+        """Generate a realistic port number."""
+        if random.random() < 0.6:
+            # Well-known ports
+            known_ports = [80, 443, 22, 21, 25, 53, 110, 143, 8080, 8443, 3306, 5432, 27017]
+            return random.choice(known_ports)
+        else:
+            # Ephemeral or high ports
+            return random.randint(49152, 65535)
+    
     def generate_log(self, attack_cat=None):
-        """Generate a single synthetic log entry."""
+        """Generate a single synthetic network log entry in standard format."""
         if attack_cat is None:
             # Choose category based on distribution
             attack_cat = np.random.choice(
@@ -91,47 +113,70 @@ class SyntheticLogGenerator:
                 p=list(ATTACK_CATEGORIES.values())
             )
         
+        # Generate structured network event data
         log_entry = {}
         
-        # Generate numeric fields
-        for col in self.numeric_cols:
-            if col == 'id':
-                # Use timestamp-based ID for uniqueness
-                log_entry[col] = int(time.time() * 1000000) % 1000000
-            elif col == 'label':
-                # Label: 0 = Normal, 1 = Attack
-                log_entry[col] = 0 if attack_cat == 'Normal' else 1
-            else:
-                log_entry[col] = self._generate_value(col, attack_cat)
+        # Core network identifiers
+        log_entry['timestamp'] = time.time()
+        log_entry['src_ip'] = self._generate_ip()
+        log_entry['dst_ip'] = self._generate_ip()
+        log_entry['src_port'] = self._generate_port()
+        log_entry['dst_port'] = self._generate_port()
         
-        # Generate categorical fields
+        # Protocol and service info
         log_entry['proto'] = random.choice(PROTOCOLS)
         log_entry['service'] = random.choice(SERVICES)
         log_entry['state'] = random.choice(STATES)
+        
+        # Traffic characteristics
+        for col in self.numeric_cols:
+            if col not in log_entry:  # Skip if already generated
+                log_entry[col] = self._generate_value(col, attack_cat)
+        
+        # Attack classification
         log_entry['attack_cat'] = attack_cat
+        log_entry['label'] = 0 if attack_cat == 'Normal' else 1
         
         # Ensure consistency: certain field combinations should match attack types
         if attack_cat == 'DoS':
-            # DoS attacks typically have high packet rates
             log_entry['spkts'] = random.randint(100, 5000)
             log_entry['rate'] = random.uniform(10000, 1000000)
             log_entry['sload'] = random.uniform(1000000, 100000000)
         elif attack_cat == 'Reconnaissance':
-            # Recon often involves TCP connections to many ports
             log_entry['proto'] = 'tcp'
             log_entry['state'] = random.choice(['REQ', 'INT'])
             log_entry['spkts'] = random.randint(1, 100)
         elif attack_cat == 'Backdoor':
-            # Backdoors typically have persistent connections
             log_entry['proto'] = 'tcp'
             log_entry['state'] = 'CON'
             log_entry['dur'] = random.uniform(10, 300)
         
         return log_entry
+    
+    def generate_syslog_format(self, log_entry):
+        """Convert log entry to standard syslog format."""
+        timestamp = time.strftime('%b %d %H:%M:%S', time.localtime(log_entry.get('timestamp', time.time())))
+        hostname = 'firewall'
+        
+        src_ip = log_entry.get('src_ip', 'unknown')
+        dst_ip = log_entry.get('dst_ip', 'unknown')
+        src_port = log_entry.get('src_port', '0')
+        dst_port = log_entry.get('dst_port', '0')
+        proto = log_entry.get('proto', 'unknown').upper()
+        attack_cat = log_entry.get('attack_cat', 'Normal')
+        
+        # Construct syslog message
+        syslog_msg = (
+            f"{timestamp} {hostname} NETFLOW[{random.randint(1000, 9999)}]: "
+            f"SRC={src_ip}:{src_port} DST={dst_ip}:{dst_port} PROTO={proto} "
+            f"PACKETS={log_entry.get('spkts', 0)} BYTES={log_entry.get('sbytes', 0)} "
+            f"CLASS={attack_cat} STATE={log_entry.get('state', 'UNK')}"
+        )
+        return syslog_msg
 
-def build_log_string(row):
-    """Fallback text representation matching the API format."""
-    return " | ".join(f"{k}={row.get(k, '')}" for k in sorted(row.keys()))
+def build_log_string(row, generator):
+    """Generate a standard syslog format representation."""
+    return generator.generate_syslog_format(row)
 
 def generate_logs(output_type, output_target, eps, api_url):
     print(f"[*] Loading dataset statistics from {TESTING_CSV}...")
@@ -177,7 +222,7 @@ def generate_logs(output_type, output_target, eps, api_url):
             if output_type == "json":
                 log_entry = json.dumps(row)
             elif output_type == "text":
-                log_entry = build_log_string(row)
+                log_entry = build_log_string(row, generator)
             
             # 1. First, Always write to the log file so the SSE Stream still picks it up for the frontend
             if output_target != "stdout":
@@ -199,7 +244,8 @@ def generate_logs(output_type, output_target, eps, api_url):
                     time_str = f"{C_BLUE}[{time.strftime('%H:%M:%S')}]{C_RESET}"
                     proto = str(safe_row.get('proto', 'UNK')).upper()
                     proto = proto + " " * max(0, 4 - len(proto))
-                    bytes_sent = str(safe_row.get('sbytes', 0)) + "B"
+                    bytes_sent = f"{int(safe_row.get('sbytes', 0))}B"
+                    packets_sent = f"{int(safe_row.get('spkts', 0))}"
                     
                     if decision == "BLOCK":
                         status = f"{C_RED}{C_BOLD}[ 🛑 BLOCKED ]{C_RESET}"
@@ -210,7 +256,7 @@ def generate_logs(output_type, output_target, eps, api_url):
                         
                     true_label = actual_label + " " * max(0, 12 - len(actual_label))
                     
-                    print(f"{time_str} {status} {C_CYAN}Proto:{C_RESET} {proto} | {C_CYAN}Size:{C_RESET} {bytes_sent:<6} | {C_BOLD}True:{C_RESET} {true_label} ➔  {C_BOLD}Pred:{C_RESET} {pred_str}")
+                    print(f"{time_str} {status} {C_CYAN}Proto:{C_RESET} {proto} | {C_CYAN}Packets:{C_RESET} {packets_sent:<6} | {C_CYAN}Size:{C_RESET} {bytes_sent:<8} | {C_BOLD}True:{C_RESET} {true_label} ➔  {C_BOLD}Pred:{C_RESET} {pred_str}")
                     
                 else:
                     print(f"{C_YELLOW}[{time.strftime('%H:%M:%S')}] API Error -> Status {res.status_code}{C_RESET}")

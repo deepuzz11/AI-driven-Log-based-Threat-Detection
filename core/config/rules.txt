@@ -251,3 +251,9 @@
     ("cloud_metadata_access", r"\b(169\.254\.169\.254|ec2 metadata request|gce metadata server)\b", "cloud"),
 
     # Suspicious process masquerading
+("ml_learned_malware_backdoor_1775385182775", r"\bmalware_backdoor\b", "malware"),
+("realtime_learned_exploits_1775385399", r"(TCP.*http)|(exploits)", "EXPLOITS"),
+("realtime_learned_exploits_1775385405", r"(TCP.*http)|(exploits)", "EXPLOITS"),
+("realtime_learned_exploits_1775385407", r"(TCP.*http)|(exploits)", "EXPLOITS"),
+("realtime_learned_dos_1775385409", r"(MERIT-INP.*-)|(dos)", "DOS"),
+("realtime_learned_exploits_1775385410", r"(TCP.*-)|(exploits)", "EXPLOITS"),
