@@ -1,0 +1,102 @@
+# ==============================
+# OS / System Files
+# ==============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Python build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# ==============================
+# Cache Files (IMPORTANT)
+# ==============================
+.cache/
+*.cache
+*.pyo
+*.pyd
+
+# ML / Data Cache
+*.npy
+*.npz
+
+# PyTorch / Transformers cache
+*.pt
+*.pth
+.huggingface/
+.transformers/
+
+# ==============================
+# Logs & Runtime Files
+# ==============================
+*.log
+logs/
+analysis_history/
+realtime_log_generator/*.log
+
+# ==============================
+# Environment Variables
+# ==============================
+.env
+.env.*
+*.env
+
+# ==============================
+# IDE / Editor
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# Testing / Coverage
+# ==============================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ==============================
+# Frontend (React / Vite)
+# ==============================
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ==============================
+# Build Outputs
+# ==============================
+*.out
+*.exe
+*.dll
+
+# ==============================
+# Misc
+# ==============================
+*.bak
+*.tmp
+*.temp
