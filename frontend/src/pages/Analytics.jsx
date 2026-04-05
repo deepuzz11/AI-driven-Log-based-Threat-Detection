@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Chart as ChartJS, CategoryScale, LinearScale, PointElement,
     LineElement, Title, Tooltip, Legend, ArcElement, BarElement, RadialLinearScale
@@ -12,12 +12,46 @@ ChartJS.register(
 )
 
 export default function Analytics() {
+    const [analyticsData, setAnalyticsData] = useState(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        // Fetch analytics data from backend
+        fetch('http://localhost:8000/api/analytics')
+            .then(res => res.json())
+            .then(data => {
+                setAnalyticsData(data)
+                setLoading(false)
+            })
+            .catch(err => {
+                console.error('Failed to fetch analytics:', err)
+                setLoading(false)
+            })
+    }, [])
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                <p style={{ color: 'var(--text-secondary)' }}>Loading analytics...</p>
+            </div>
+        )
+    }
+
+    if (!analyticsData) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                <p style={{ color: 'var(--accent-red)' }}>Failed to load analytics data</p>
+            </div>
+        )
+    }
+
+    // Build line chart data
     const lineData = {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: analyticsData.traffic_volume.labels,
         datasets: [
             {
                 label: 'Total Events Analysed',
-                data: [1200, 1900, 3000, 5000, 2000, 3000, 4500],
+                data: analyticsData.traffic_volume.total_events,
                 borderColor: 'rgba(59, 130, 246, 1)',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 fill: true,
@@ -25,7 +59,7 @@ export default function Analytics() {
             },
             {
                 label: 'Threats Blocked',
-                data: [20, 50, 40, 100, 10, 30, 80],
+                data: analyticsData.traffic_volume.threats_blocked,
                 borderColor: 'rgba(239, 68, 68, 1)',
                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 fill: true,
@@ -34,11 +68,12 @@ export default function Analytics() {
         ]
     }
 
+    // Build donut chart data
     const donutData = {
-        labels: ['Normal Traffic', 'Exploits', 'Fuzzers', 'DoS', 'Backdoor', 'Recon'],
+        labels: analyticsData.traffic_distribution.labels,
         datasets: [
             {
-                data: [65, 12, 8, 6, 5, 4],
+                data: analyticsData.traffic_distribution.data,
                 backgroundColor: [
                     'rgba(16, 185, 129, 0.8)',
                     'rgba(239, 68, 68, 0.8)',
@@ -52,12 +87,13 @@ export default function Analytics() {
         ]
     }
 
+    // Build bar chart data
     const barData = {
-        labels: ['Exploits', 'Fuzzers', 'DoS', 'Backdoor', 'Worms', 'Recon', 'Shellcode', 'Generic'],
+        labels: analyticsData.attack_vectors.labels,
         datasets: [
             {
                 label: 'Attack Frequency',
-                data: [45, 32, 28, 20, 15, 12, 8, 5],
+                data: analyticsData.attack_vectors.data,
                 backgroundColor: [
                     'rgba(239, 68, 68, 0.7)',
                     'rgba(245, 158, 11, 0.7)',
@@ -95,26 +131,20 @@ export default function Analytics() {
     }
 
     const stats = [
-        { label: 'Total Logs Processed', value: '20,600', icon: Activity, color: 'var(--text-primary)' },
-        { label: 'Threats Intercepted', value: '330', icon: ShieldAlert, color: 'var(--accent-red)' },
-        { label: 'Active Rules', value: '12', icon: Zap, color: 'var(--accent-green)' },
-        { label: 'Avg Inference Time', value: '3.4ms', icon: Clock, color: 'var(--accent-blue)' },
+        { label: 'Total Logs Processed', value: analyticsData.stats.total_logs_processed.toLocaleString(), icon: Activity, color: 'var(--text-primary)' },
+        { label: 'Threats Intercepted', value: analyticsData.stats.threats_intercepted.toLocaleString(), icon: ShieldAlert, color: 'var(--accent-red)' },
+        { label: 'Active Rules', value: analyticsData.stats.active_rules, icon: Zap, color: 'var(--accent-green)' },
+        { label: 'Avg Inference Time', value: `${analyticsData.stats.avg_inference_time_ms}ms`, icon: Clock, color: 'var(--accent-blue)' },
     ]
 
     const systemMetrics = [
-        { label: 'CPU Usage', value: '34%', percent: 34, icon: Cpu, color: 'var(--accent-blue)' },
-        { label: 'Memory', value: '2.1 / 8 GB', percent: 26, icon: MemoryStick, color: 'var(--accent-purple)' },
-        { label: 'Disk I/O', value: '120 MB/s', percent: 48, icon: HardDrive, color: 'var(--accent-cyan)' },
-        { label: 'Network', value: '850 Mbps', percent: 65, icon: Wifi, color: 'var(--accent-green)' },
+        { label: 'CPU Usage', value: `${analyticsData.system_metrics.cpu_usage}%`, percent: analyticsData.system_metrics.cpu_usage, icon: Cpu, color: 'var(--accent-blue)' },
+        { label: 'Memory', value: `${analyticsData.system_metrics.memory.used} / ${analyticsData.system_metrics.memory.total} GB`, percent: Math.round((analyticsData.system_metrics.memory.used / analyticsData.system_metrics.memory.total) * 100), icon: MemoryStick, color: 'var(--accent-purple)' },
+        { label: 'Disk I/O', value: `${analyticsData.system_metrics.disk_io} MB/s`, percent: 48, icon: HardDrive, color: 'var(--accent-cyan)' },
+        { label: 'Network', value: `${analyticsData.system_metrics.network} Mbps`, percent: 65, icon: Wifi, color: 'var(--accent-green)' },
     ]
 
-    const recentThreats = [
-        { time: '2 min ago', type: 'Exploits', source: '192.168.1.45', status: 'Blocked' },
-        { time: '8 min ago', type: 'DoS', source: '10.0.0.12', status: 'Blocked' },
-        { time: '15 min ago', type: 'Fuzzers', source: '172.16.0.88', status: 'Quarantined' },
-        { time: '22 min ago', type: 'Backdoor', source: '192.168.2.10', status: 'Blocked' },
-        { time: '31 min ago', type: 'Recon', source: '10.0.1.55', status: 'Logged' },
-    ]
+    const recentThreats = analyticsData.recent_threats
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '0' }}>

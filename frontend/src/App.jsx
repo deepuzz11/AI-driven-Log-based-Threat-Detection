@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Shield, Home, BarChart3, Activity, FileText, Blocks, Settings, Sun, Moon, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Shield, Home, BarChart3, Activity, FileText, Blocks, Settings, Sun, Moon, Menu, X, ChevronLeft, ChevronRight, Zap } from 'lucide-react'
 import './index.css'
 
 function App() {
@@ -40,7 +40,10 @@ function App() {
     switch (location.pathname) {
       case '/': return 'Global Overview'
       case '/analytics': return 'Threat Analytics'
+      case '/correlation': return 'Log Correlation'
+      case '/realtime': return 'Real-Time Correlation'
       case '/reports': return 'Incident Reports'
+      case '/rules': return 'Rule Management'
       case '/integrations': return 'System Integrations'
       case '/settings': return 'Platform Settings'
       case '/live': return 'Live Monitoring'
@@ -104,6 +107,12 @@ function App() {
             <Link to="/analytics" className={`nav-item ${location.pathname === '/analytics' ? 'active' : ''}`} title="Analytics">
               <BarChart3 size={18} /> <span>Analytics</span>
             </Link>
+            <Link to="/correlation" className={`nav-item ${location.pathname === '/correlation' ? 'active' : ''}`} title="Log Correlation">
+              <Zap size={18} /> <span>Log Correlation</span>
+            </Link>
+            <Link to="/realtime" className={`nav-item ${location.pathname === '/realtime' ? 'active' : ''}`} title="Real-Time Correlation">
+              <Activity size={18} /> <span>Real-Time Correlation</span>
+            </Link>
             <Link to="/live" className={`nav-item ${location.pathname === '/live' ? 'active' : ''}`} title="Live Traffic">
               <Activity size={18} /> <span>Live Traffic</span>
             </Link>
@@ -111,6 +120,9 @@ function App() {
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', margin: '20px 12px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Operations</div>
             <Link to="/reports" className={`nav-item ${location.pathname === '/reports' ? 'active' : ''}`} title="Incident Reports">
               <FileText size={18} /> <span>Incident Reports</span>
+            </Link>
+            <Link to="/rules" className={`nav-item ${location.pathname === '/rules' ? 'active' : ''}`} title="Rule Management">
+              <Zap size={18} /> <span>Rule Management</span>
             </Link>
             <Link to="/integrations" className={`nav-item ${location.pathname === '/integrations' ? 'active' : ''}`} title="Integrations">
               <Blocks size={18} /> <span>Integrations</span>

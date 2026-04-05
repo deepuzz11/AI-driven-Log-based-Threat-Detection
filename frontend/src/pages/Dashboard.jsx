@@ -10,6 +10,10 @@ import ClusterCard from '../components/ClusterCard'
 import ExplainPanel from '../components/ExplainPanel'
 import SuggestPanel from '../components/SuggestPanel'
 import RuleAddPanel from '../components/RuleAddPanel'
+import RuleHitsPanel from '../components/RuleHitsPanel'
+import SequenceViewer from '../components/SequenceViewer'
+import CorrelationInsights from '../components/CorrelationInsights'
+import SequenceExplainability from '../components/SequenceExplainability'
 
 const API = '/api'
 
@@ -24,6 +28,8 @@ export default function Dashboard() {
     const [rowIndex, setRowIndex] = useState('')
     const [activeTab, setActiveTab] = useState('overview')
     const [ruleForm, setRuleForm] = useState({ name: '', regex: '', category: '', severity: 'HIGH', remedy: '' })
+    const [correlationData, setCorrelationData] = useState(null)
+    const [correlationLoading, setCorrelationLoading] = useState(false)
 
     useEffect(() => {
         fetch(`${API}/stats`).then(r => r.json()).then(setStats).catch(console.error)
@@ -204,18 +210,8 @@ export default function Dashboard() {
                     </div>
                 ), { duration: 3000 })
                 if (stats) setStats({ ...stats, rules_count: data.rules_count })
-            } else {
-                toast.custom((t) => (
-                    <div className="custom-toast error slide-down">
-                        <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                        <div className="custom-toast-content">
-                            <div className="custom-toast-title">Duplicate Rule</div>
-                            <div className="custom-toast-message">A rule with this pattern already exists.</div>
-                        </div>
-                        <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    </div>
-                ))
             }
+            // Silent skip when rule already exists (data.added = false) - no toast shown
         } catch (e) {
             toast.custom((t) => (
                 <div className="custom-toast error slide-down">
@@ -229,6 +225,68 @@ export default function Dashboard() {
             ))
         }
     }, [ruleForm, stats])
+
+    const runCorrelationAnalysis = useCallback(async () => {
+        if (!sample) {
+            toast.error('Please load a sample first')
+            return
+        }
+
+        setCorrelationLoading(true)
+        setCorrelationData(null)
+
+        const toastId = toast.custom((t) => (
+            <div className="custom-toast loading slide-down">
+                <div className="custom-toast-icon"><Loader2 size={18} className="spinner" /></div>
+                <div className="custom-toast-content">
+                    <div className="custom-toast-title">Analyzing Sequence</div>
+                    <div className="custom-toast-message">Correlating logs across sequence...</div>
+                </div>
+            </div>
+        ), { duration: Infinity })
+
+        try {
+            const correlationIndex = Math.max(0, parseInt(rowIndex) - 5)
+            const response = await fetch(
+                `${API}/correlate-sequence/${correlationIndex}?seq_len=10`,
+                { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+            )
+
+            if (!response.ok) {
+                throw new Error('Analysis failed')
+            }
+
+            const data = await response.json()
+            setCorrelationData(data)
+
+            toast.custom((t) => (
+                <div className="custom-toast success slide-down">
+                    <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Sequence Analyzed</div>
+                        <div className="custom-toast-message">
+                            {data.explainability.threat_level} - {data.explainability.attack_count} attacks detected
+                        </div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                </div>
+            ), { duration: 3000, id: toastId })
+        } catch (e) {
+            toast.custom((t) => (
+                <div className="custom-toast error slide-down">
+                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Correlation Failed</div>
+                        <div className="custom-toast-message">Could not analyze sequence</div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                </div>
+            ), { id: toastId })
+        } finally {
+            setCorrelationLoading(false)
+        }
+    }, [sample, rowIndex])
 
     return (
         <div className="main-layout layout-pro">
@@ -265,6 +323,17 @@ export default function Dashboard() {
                             >
                                 Deep Dive
                             </button>
+                            <button
+                                className={`tab-item ${activeTab === 'correlation' ? 'active' : ''}`}
+                                onClick={() => {
+                                    setActiveTab('correlation')
+                                    if (!correlationData && !correlationLoading) {
+                                        runCorrelationAnalysis()
+                                    }
+                                }}
+                            >
+                                Sequence Correlation
+                            </button>
                             {result.decision === 'ATTACK' && (
                                 <button
                                     className={`tab-item ${activeTab === 'rules' ? 'active' : ''}`}
@@ -281,17 +350,75 @@ export default function Dashboard() {
                                 <div className="results-grid fade-in-scale">
                                     <VerdictCard result={result} />
                                     <ClusterCard result={result} />
+                                    {result.rule_hits && result.rule_hits.length > 0 && (
+                                        <div style={{ gridColumn: '1 / -1' }}>
+                                            <RuleHitsPanel ruleHits={result.rule_hits} />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {activeTab === 'deepdive' && (
                                 <div className="results-grid fade-in-scale">
                                     <ExplainPanel result={result} />
+                                    <SuggestPanel result={result} />
+                                </div>
+                            )}
+
+                            {activeTab === 'correlation' && (
+                                <div className="fade-in-scale">
+                                    {correlationLoading ? (
+                                        <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
+                                            <Loader2 size={24} className="spinner" style={{ margin: '0 auto 12px' }} />
+                                            <p style={{ color: 'var(--text-secondary)' }}>Analyzing sequence correlations...</p>
+                                        </div>
+                                    ) : correlationData ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                            <CorrelationInsights
+                                                explainability={correlationData.explainability}
+                                                correlationStats={correlationData.correlation_stats}
+                                                ruleHits={correlationData.all_rule_hits}
+                                            />
+                                            <SequenceExplainability
+                                                explainability={correlationData.explainability}
+                                                correlationStats={correlationData.correlation_stats}
+                                            />
+                                            <SequenceViewer
+                                                sequenceLogs={correlationData.sequence_logs}
+                                                explainability={correlationData.explainability}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
+                                            <p style={{ color: 'var(--text-secondary)' }}>Click to analyze sequence correlations around this log</p>
+                                            <button
+                                                onClick={runCorrelationAnalysis}
+                                                disabled={correlationLoading}
+                                                style={{
+                                                    marginTop: '12px',
+                                                    padding: '8px 16px',
+                                                    background: 'var(--accent-blue)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: 600
+                                                }}
+                                            >
+                                                Analyze Sequence
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {activeTab === 'rules' && result.decision === 'ATTACK' && (
                                 <div className="fade-in-scale">
+                                    {result.rule_hits && result.rule_hits.length > 0 && (
+                                        <div style={{ marginBottom: '24px' }}>
+                                            <RuleHitsPanel ruleHits={result.rule_hits} />
+                                        </div>
+                                    )}
                                     <RuleAddPanel
                                         ruleForm={ruleForm} setRuleForm={setRuleForm}
                                         addRule={addRule} ruleMsg={null}

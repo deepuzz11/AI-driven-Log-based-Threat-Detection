@@ -1,0 +1,260 @@
+.threat-summary {
+    padding: 16px;
+    border-left: 4px solid var(--accent-red);
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.threat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.threat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.threat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.threat-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.threat-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.soc-analysis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.soc-section {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.soc-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.soc-question {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.soc-hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.soc-answer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.soc-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    word-break: break-all;
+    padding: 6px 8px;
+    background: rgba(6, 182, 212, 0.1);
+    border-radius: 4px;
+}
+
+.soc-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}
+
+.timeline-section {
+    margin: 16px 0;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timeline-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.timeline-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    flex-shrink: 0;
+    color: var(--accent-blue);;
+}
+
+.timeline-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-grow: 1;
+}
+
+.timeline-attack {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.timeline-count {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.metric-box {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.metric-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.metric-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-orange);
+    font-family: 'Monaco', 'Courier', monospace;
+}
+
+.action-panel {
+    padding: 12px;
+    border-left: 4px solid var(--accent-red);
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+    margin: 16px 0;
+}
+
+.action-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.action-text {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.correlation-info {
+    margin-top: 16px;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.info-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    min-width: 140px;
+}
+
+.info-value {
+    color: var(--text-primary);
+    flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+    .soc-analysis {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
