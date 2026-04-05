@@ -11,19 +11,137 @@ import requests
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTING_CSV = os.path.join(BASE_DIR, "UNSW_NB15_testing-set.csv")
 
+PROTOCOLS = ['tcp', 'udp', 'icmp', 'igmp', 'ospf', 'arp', 'gre']
+SERVICES = ['-', 'http', 'ftp', 'ftp-data', 'smtp', 'ssh', 'dns', 'dhcp']
+STATES = ['INT', 'FIN', 'REQ', 'ACC', 'CON', 'CLO', 'ECO']
+ATTACK_CATEGORIES = {
+    'Normal': 0.450,
+    'Generic': 0.230,
+    'Exploits': 0.135,
+    'Fuzzers': 0.070,
+    'DoS': 0.050,
+    'Reconnaissance': 0.040,
+    'Analysis': 0.010,
+    'Backdoor': 0.010,
+    'Shellcode': 0.003,
+    'Worms': 0.002,
+}
+
+class SyntheticLogGenerator:
+    """Generate synthetic network logs matching UNSW-NB15 dataset characteristics."""
+    
+    def __init__(self, csv_path):
+        """Initialize with dataset statistics."""
+        df = pd.read_csv(csv_path)
+        self.df_stats = self._compute_stats(df)
+        self.numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        self.categorical_cols = df.select_dtypes(include=['object']).columns.tolist()
+        self.all_cols = df.columns.tolist()
+        
+    def _compute_stats(self, df):
+        """Compute statistics for each numeric column."""
+        stats = {}
+        for col in df.select_dtypes(include=[np.number]).columns:
+            stats[col] = {
+                'mean': float(df[col].mean()),
+                'std': float(df[col].std()),
+                'min': float(df[col].min()),
+                'max': float(df[col].max()),
+                'q25': float(df[col].quantile(0.25)),
+                'q75': float(df[col].quantile(0.75)),
+            }
+        return stats
+    
+    def _generate_value(self, col, attack_type='Normal'):
+        """Generate a realistic value for a column."""
+        if col not in self.df_stats:
+            return 0
+        
+        stats = self.df_stats[col]
+        
+        # Adjust distributions based on attack type
+        if attack_type != 'Normal':
+            # Attack logs typically have more variation and extreme values
+            mean_mult = random.uniform(1.2, 2.5) if col in ['sbytes', 'dbytes', 'spkts', 'dpkts'] else 1.0
+            std_mult = random.uniform(1.5, 3.0) if col in ['sload', 'dload', 'rate'] else 1.0
+        else:
+            mean_mult = 1.0
+            std_mult = 1.0
+        
+        # Generate value using normal distribution, clipped to realistic bounds
+        value = np.random.normal(
+            stats['mean'] * mean_mult,
+            stats['std'] * std_mult
+        )
+        value = max(stats['min'], min(value, stats['max'] * 2))
+        
+        # Return as int or float
+        if 'duration' not in col.lower() and col in ['dur', 'rate', 'sload', 'dload', 'sinpkt', 'dinpkt', 
+                                                       'sjit', 'djit', 'tcprtt', 'synack', 'ackdat']:
+            return float(value)
+        else:
+            return int(value)
+    
+    def generate_log(self, attack_cat=None):
+        """Generate a single synthetic log entry."""
+        if attack_cat is None:
+            # Choose category based on distribution
+            attack_cat = np.random.choice(
+                list(ATTACK_CATEGORIES.keys()),
+                p=list(ATTACK_CATEGORIES.values())
+            )
+        
+        log_entry = {}
+        
+        # Generate numeric fields
+        for col in self.numeric_cols:
+            if col == 'id':
+                # Use timestamp-based ID for uniqueness
+                log_entry[col] = int(time.time() * 1000000) % 1000000
+            elif col == 'label':
+                # Label: 0 = Normal, 1 = Attack
+                log_entry[col] = 0 if attack_cat == 'Normal' else 1
+            else:
+                log_entry[col] = self._generate_value(col, attack_cat)
+        
+        # Generate categorical fields
+        log_entry['proto'] = random.choice(PROTOCOLS)
+        log_entry['service'] = random.choice(SERVICES)
+        log_entry['state'] = random.choice(STATES)
+        log_entry['attack_cat'] = attack_cat
+        
+        # Ensure consistency: certain field combinations should match attack types
+        if attack_cat == 'DoS':
+            # DoS attacks typically have high packet rates
+            log_entry['spkts'] = random.randint(100, 5000)
+            log_entry['rate'] = random.uniform(10000, 1000000)
+            log_entry['sload'] = random.uniform(1000000, 100000000)
+        elif attack_cat == 'Reconnaissance':
+            # Recon often involves TCP connections to many ports
+            log_entry['proto'] = 'tcp'
+            log_entry['state'] = random.choice(['REQ', 'INT'])
+            log_entry['spkts'] = random.randint(1, 100)
+        elif attack_cat == 'Backdoor':
+            # Backdoors typically have persistent connections
+            log_entry['proto'] = 'tcp'
+            log_entry['state'] = 'CON'
+            log_entry['dur'] = random.uniform(10, 300)
+        
+        return log_entry
+
 def build_log_string(row):
     """Fallback text representation matching the API format."""
     return " | ".join(f"{k}={row.get(k, '')}" for k in sorted(row.keys()))
 
 def generate_logs(output_type, output_target, eps, api_url):
-    print(f"[*] Loading dataset from {TESTING_CSV}...")
+    print(f"[*] Loading dataset statistics from {TESTING_CSV}...")
     try:
-        df = pd.read_csv(TESTING_CSV)
+        generator = SyntheticLogGenerator(TESTING_CSV)
     except FileNotFoundError:
         print(f"[!] Error: Could not find dataset at {TESTING_CSV}")
         return
     
-    print(f"[*] Loaded {len(df)} rows.")
+    print(f"[*] Initialized synthetic log generator with dataset characteristics.")
     
     # ANSI Colors
     C_BLUE = '\033[94m'
@@ -46,8 +164,8 @@ def generate_logs(output_type, output_target, eps, api_url):
     
     try:
         while True:
-            # Randomly sample a row
-            row = df.sample(1).iloc[0].to_dict()
+            # Generate synthetic log based on dataset characteristics
+            row = generator.generate_log()
             
             # Convert numpy types to native Python types for clean JSON serialization
             row = {k: (int(v) if isinstance(v, (np.integer, int)) else  # type: ignore
@@ -117,7 +235,7 @@ if __name__ == "__main__":
                         help="Output target destination: 'stdout' or a file path. (Default: realtime_log_generator/realtime_traffic.log)")
     parser.add_argument("--eps", type=float, default=2.0, 
                         help="Events Per Second (EPS) target rate. (Default: 2.0)")
-    parser.add_argument("--api-url", default="http://localhost:5000/api/analyze",
+    parser.add_argument("--api-url", default="http://localhost:8000/api/analyze",
                         help="URL of the log analyzer API (used only if --type is 'api').")
     
     args = parser.parse_args()

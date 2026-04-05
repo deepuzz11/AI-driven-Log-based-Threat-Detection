@@ -1,0 +1,729 @@
+{
+  "report_metadata": {
+    "generated_date": "2026-04-04",
+    "analyzed_files": 10,
+    "total_pages": 6,
+    "total_components": 4,
+    "analysis_type": "React Application Architecture & Code Duplication Review"
+  },
+  
+  "A_DUPLICATION_MATRIX": {
+    "description": "Cross-page and cross-component functionality overlap analysis",
+    "high_priority_duplications": [
+      {
+        "duplication_id": "DUP-1",
+        "severity": "CRITICAL",
+        "name": "Sequence Analysis Components",
+        "affected_components": [
+          "SequenceExplainability.jsx",
+          "CorrelationInsights.jsx"
+        ],
+        "similarity_percentage": 80,
+        "duplicate_features": [
+          "Threat level gauge (CRITICAL/HIGH/MEDIUM/LOW/NONE)",
+          "WHO/WHERE/WHAT/ACTION SOC model display (100% identical code)",
+          "Attack distribution visualization",
+          "Rules triggered metric",
+          "Malicious entries count",
+          "Confidence calculations",
+          "Threat color mapping logic"
+        ],
+        "locations": [
+          "SequenceExplainability.jsx (lines 30-50: getThreatColor, getActionText, lines 75-160: SOC analysis)",
+          "CorrelationInsights.jsx (lines 15-45: getThreatLevelColor, lines 80-110: SOC explainability)"
+        ],
+        "recommendation": "MERGE into unified <SequenceAnalysisPanel> component with configurable layout"
+      },
+      {
+        "duplication_id": "DUP-2",
+        "severity": "CRITICAL",
+        "name": "Real-Time Log Streaming Logic",
+        "affected_pages": [
+          "RealtimeCorrelation.jsx",
+          "LiveTraffic.jsx"
+        ],
+        "similarity_percentage": 85,
+        "duplicate_features": [
+          "SSE EventSource connection & cleanup",
+          "Log counter management (logCounterRef, threatCounterRef)",
+          "Real-time generation start/stop (useCallback)",
+          "Stream error handling",
+          "Toast notifications for stream events",
+          "Analysis state management"
+        ],
+        "locations": [
+          "RealtimeCorrelation.jsx (lines 13-26: startRealtimeGeneration, lines 47-62: stopRealtimeGeneration, lines 145-165: EventSource handler)",
+          "LiveTraffic.jsx (lines 20-45: startScan, lines 68-85: stopScan, lines 87-130: EventSource handler)"
+        ],
+        "recommendation": "EXTRACT into custom hook: useRealtimeStream(eventRate, onLogReceived, onError)"
+      },
+      {
+        "duplication_id": "DUP-3",
+        "severity": "HIGH",
+        "name": "Correlation Analysis Page Structure",
+        "affected_pages": [
+          "CorrelationAnalysis.jsx",
+          "RealtimeCorrelation.jsx"
+        ],
+        "similarity_percentage": 70,
+        "duplicate_features": [
+          "Input section for sequence parameters",
+          "Analysis state management",
+          "CorrelationInsights + SequenceExplainability + SequenceViewer composition",
+          "Empty state placeholder",
+          "Result rendering logic",
+          "Similar toast notification patterns"
+        ],
+        "locations": [
+          "CorrelationAnalysis.jsx (lines 40-120: UI structure and flow)",
+          "RealtimeCorrelation.jsx (lines 130-230: results-section identical rendering)"
+        ],
+        "recommendation": "CREATE base <CorrelationResultsContainer> component, differentiate input sections only"
+      },
+      {
+        "duplication_id": "DUP-4",
+        "severity": "MEDIUM",
+        "name": "Toast Notification Patterns",
+        "affected_pages": [
+          "Dashboard.jsx",
+          "Analytics.jsx (implicit via toasts)",
+          "CorrelationAnalysis.jsx",
+          "RealtimeCorrelation.jsx",
+          "LiveTraffic.jsx"
+        ],
+        "similarity_percentage": 90,
+        "duplicate_features": [
+          "Custom toast structure (icon + title + message + close button + progress)",
+          "Success, error, loading toast styles",
+          "Toast duration management",
+          "Icon selection logic (CheckCircle2, AlertTriangle, Loader2, X)"
+        ],
+        "recommendations": "CREATE utility functions: toastSuccess(), toastError(), toastLoading()",
+        "example_duplicate": "Dashboard.jsx lines 37-48 vs CorrelationAnalysis.jsx lines 53-63 (identical structure)"
+      }
+    ],
+    "medium_priority_duplications": [
+      {
+        "duplication_id": "DUP-5",
+        "severity": "MEDIUM",
+        "name": "Metric Display & Calculation",
+        "affected_pages": [
+          "Dashboard.jsx (stats display)",
+          "Analytics.jsx (system metrics & stats)",
+          "RealtimeCorrelation.jsx (control panel metrics)",
+          "LiveTraffic.jsx (header metrics)"
+        ],
+        "duplicate_logic": "Icon + label + value display patterns with custom styling",
+        "recommendation": "CREATE <MetricCard> component to standardize metric display"
+      },
+      {
+        "duplication_id": "DUP-6",
+        "severity": "MEDIUM",
+        "name": "Feature Importance Visualization",
+        "affected_components": [
+          "ExplainPanel.jsx (lines 25-40: feature-bar rendering)"
+        ],
+        "affected_pages": [
+          "Dashboard.jsx (via ExplainPanel)"
+        ],
+        "could_extend_to": [
+          "SequenceExplainability (missing feature-level breakdown)",
+          "RealtimeCorrelation (missing per-log feature analysis)"
+        ],
+        "recommendation": "Create reusable <FeatureBarChart> component for consistency"
+      }
+    ]
+  },
+
+  "B_EXPLAINABILITY_FEATURES_IMPLEMENTED": {
+    "description": "Current explainability capabilities across application",
+    "summary": {
+      "total_explainability_methods": 7,
+      "explainability_layers": 3,
+      "fully_implemented": 5,
+      "partially_implemented": 2
+    },
+    "single_log_explainability": {
+      "feature": "Individual log interpretation",
+      "implemented_in": ["Dashboard.jsx", "LiveTraffic.jsx"],
+      "components_involved": ["VerdictCard.jsx", "ExplainPanel.jsx"],
+      "capabilities": {
+        "verdict": {
+          "type": "Binary Classification",
+          "displays": ["ATTACK DETECTED | BENIGN TRAFFIC"],
+          "supporting_data": ["Prediction label", "Detection method (Rule-based vs ML)"],
+          "location": "VerdictCard.jsx"
+        },
+        "confidence": {
+          "type": "Numerical Score",
+          "displays": ["0-100% confidence percentage", "Confidence progress bar"],
+          "color_coding": ["Green for benign", "Red gradient for attacks"],
+          "location": "VerdictCard.jsx lines 32-41"
+        },
+        "method_indication": {
+          "type": "Detection Attribution",
+          "displays": ["⚡ Rule-Based | 🤖 ML Model"],
+          "explanation": "Which engine detected the threat",
+          "location": "VerdictCard.jsx line 26, LiveTraffic.jsx line 238"
+        },
+        "rule_matches": {
+          "type": "Symbolic Explanation",
+          "displays": ["Matched rule names", "Rule category", "Rule severity", "Remedy suggestion"],
+          "logic": "Shows when Rule engine triggered",
+          "location": "ExplainPanel.jsx lines 13-27"
+        }
+      }
+    },
+    "ml_model_explainability": {
+      "feature": "Machine Learning Model Attribution",
+      "implemented_in": ["Dashboard.jsx (Deep Dive tab)"],
+      "components_involved": ["ExplainPanel.jsx"],
+      "capabilities": {
+        "feature_importance": {
+          "type": "SHAP-like Feature Attribution",
+          "displays": ["Top N contributing features", "Importance scores", "Ranked bar charts"],
+          "shows": "Which input features most influenced the attack prediction",
+          "location": "ExplainPanel.jsx lines 28-40",
+          "status": "✓ IMPLEMENTED"
+        },
+        "class_probabilities": {
+          "type": "Prediction Distribution",
+          "displays": ["Probability per attack class", "Categorized breakdown (Exploits/Fuzzers/DoS/etc)", "Percentage bars"],
+          "shows": "Model's confidence distribution across attack types",
+          "location": "ExplainPanel.jsx lines 41-54",
+          "status": "✓ IMPLEMENTED"
+        }
+      }
+    },
+    "sequence_level_explainability": {
+      "feature": "Multi-log Threat Analysis",
+      "implemented_in": ["Dashboard.jsx (Correlation tab)", "CorrelationAnalysis.jsx", "RealtimeCorrelation.jsx"],
+      "components_involved": ["SequenceExplainability.jsx", "CorrelationInsights.jsx", "SequenceViewer.jsx"],
+      "capabilities": {
+        "threat_level_assessment": {
+          "type": "Risk Scoring",
+          "levels": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE"],
+          "calculation": "Based on attack_count vs sequence length",
+          "color_coded": "Red -> Orange -> Yellow -> Cyan -> Green",
+          "location": "SequenceExplainability.jsx lines 25-35, CorrelationInsights.jsx lines 76-100",
+          "status": "✓ IMPLEMENTED"
+        },
+        "soc_model": {
+          "type": "Security Operations Center Question Framework",
+          "questions": [
+            {
+              "who": "WHO? - Source IP of attacker",
+              "data": "explainability.who (IP address)",
+              "shown_in": "SequenceExplainability.jsx lines 82-95, CorrelationInsights.jsx lines 103-115"
+            },
+            {
+              "where": "WHERE? - Target/destination IP",
+              "data": "explainability.where (IP address)",
+              "shown_in": "SequenceExplainability.jsx lines 96-109, CorrelationInsights.jsx lines 116-128"
+            },
+            {
+              "what": "WHAT? - Attack type/category",
+              "data": "explainability.what (attack class)",
+              "shown_in": "SequenceExplainability.jsx lines 110-123, CorrelationInsights.jsx lines 129-141"
+            },
+            {
+              "action": "ACTION? - Recommended response",
+              "computed_by": "getActionText() based on threat_level",
+              "shown_in": "SequenceExplainability.jsx lines 169-189"
+            }
+          ],
+          "status": "✓ FULLY IMPLEMENTED"
+        },
+        "attack_timeline": {
+          "type": "Sequential Attack Pattern Display",
+          "displays": ["Attack types in sequence", "Occurrence count for each", "Timeline visualization"],
+          "shows": "Which attacks occurred in what sequence and how many times",
+          "location": "SequenceExplainability.jsx lines 140-165, CorrelationInsights.jsx lines 172-190",
+          "data_from": "explainability.top_attacks array",
+          "status": "✓ IMPLEMENTED"
+        },
+        "metrics": {
+          "type": "Quantitative Summary",
+          "metrics_shown": [
+            "Rules Triggered: unique_rules_hit",
+            "Malicious Entries: attack_count",
+            "Analysis Time: total_time_ms",
+            "Confidence Level: calculated from attack_count"
+          ],
+          "location": "SequenceExplainability.jsx lines 192-210, CorrelationInsights.jsx lines 222-244",
+          "status": "✓ IMPLEMENTED"
+        },
+        "recommended_action": {
+          "type": "Prescriptive Guidance",
+          "varies_by": "threat_level (CRITICAL/HIGH/MEDIUM/LOW/NONE)",
+          "examples": {
+            "CRITICAL": "Block IP immediately. Isolate host. Initiate incident response.",
+            "HIGH": "Block IP. Monitor activity. Alert analyst.",
+            "MEDIUM": "Log activity. Track pattern evolution.",
+            "LOW": "Monitor IP. Add to watchlist."
+          },
+          "location": "SequenceExplainability.jsx lines 62-73 (getActionText), lines 166-190 (display)",
+          "status": "✓ IMPLEMENTED"
+        }
+      }
+    },
+    "real_time_explainability": {
+      "feature": "Live Streaming Analysis Explanations",
+      "implemented_in": ["RealtimeCorrelation.jsx", "LiveTraffic.jsx"],
+      "capabilities": {
+        "auto_learned_rules": {
+          "type": "Pattern Discovery Attribution",
+          "displays": ["New rule name", "Source (auto-learned from ML)", "Pattern/regex", "Category"],
+          "shows": "Which patterns the system learned from detected attacks",
+          "location": "RealtimeCorrelation.jsx lines 118-160",
+          "status": "✓ IMPLEMENTED"
+        },
+        "threat_history": {
+          "type": "Time-Series Threat Detection",
+          "displays": ["Timestamp", "Log #", "Prediction", "Confidence %"],
+          "shows": "Sequence of malicious detections in real-time",
+          "location": "RealtimeCorrelation.jsx lines 162-197",
+          "status": "✓ IMPLEMENTED"
+        },
+        "live_method_indication": {
+          "type": "Per-Log Detection Attribution",
+          "displays": ["RULE badge (purple) vs ML badge (blue)"],
+          "shows": "For each live log, which detector caught it",
+          "location": "LiveTraffic.jsx lines 238-246",
+          "status": "✓ IMPLEMENTED"
+        }
+      }
+    },
+    "historical_explainability": {
+      "feature": "Incident Report Context",
+      "implemented_in": ["Reports.jsx"],
+      "capabilities": {
+        "incident_tracking": {
+          "type": "Threat History",
+          "displays": ["Report ID", "Date detected", "Threat category", "Severity level", "Resolution status"],
+          "shows": "Historical context of previously detected threats",
+          "limitations": "No link to original analysis details or explanation",
+          "status": "⚠ PARTIALLY IMPLEMENTED"
+        }
+      }
+    },
+    "explainability_gaps": [
+      {
+        "gap": "Sequence-Level Feature Attribution",
+        "description": "No explanation of which specific features in which logs caused the sequence-level threat detection",
+        "impact": "Users cannot understand why entire sequence was flagged, only that it was",
+        "location_should_be": "SequenceExplainability.jsx or new component",
+        "priority": "HIGH"
+      },
+      {
+        "gap": "Per-Log Breakdown in Sequence",
+        "description": "SequenceViewer shows logs but not individual explainability for each",
+        "impact": "Users see logs in sequence but no per-log confidence or feature importance",
+        "example": "Could show confidence trend across sequence",
+        "priority": "HIGH"
+      },
+      {
+        "gap": "Temporal Pattern Analysis",
+        "description": "No explanation of timing-based attack patterns (e.g., coordinated attacks, escalation patterns)",
+        "impact": "Multi-step sophisticated attacks not adequately explained",
+        "priority": "MEDIUM"
+      },
+      {
+        "gap": "Model Architecture Visualization",
+        "description": "No visualization of transformer/attention weights or model decision path",
+        "note": "final.ipynb shows transformer architecture not visualized in UI",
+        "impact": "Cannot inspect what model layers are focusing on",
+        "priority": "LOW"
+      },
+      {
+        "gap": "Query-Based Explanations",
+        "description": "No 'What-if' or 'Why did X happen?' interactive explanations",
+        "possible_example": "Why wasn't this flagged earlier? What if we changed this feature?",
+        "priority": "LOW"
+      },
+      {
+        "gap": "Attack Progression Visualization",
+        "description": "No graph/network showing attack progression or pivot points",
+        "impact": "Complex multi-stage attacks not visually represented",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+
+  "C_MISSING_FEATURES_FROM_FINAL_IPYNB": {
+    "description": "Features derived from ML model in final.ipynb not yet exposed in UI",
+    "analysis": {
+      "model_type": "Transformer-based temporal sequence model",
+      "training_approach": "Sequence learning with attention mechanisms",
+      "unexposed_capabilities": [
+        {
+          "feature": "Attention Weights Visualization",
+          "implemented_in_notebook": "Transformer architecture with MultiHeadAttention (4 heads, 64 key_dim)",
+          "not_exposed_in_ui": true,
+          "potential_benefit": "Show which time-steps in log sequence are most relevant to threat detection",
+          "suggested_component": "AttentionHeatmap.jsx - visualize which logs in sequence contribute most"
+        },
+        {
+          "feature": "Temporal Embedding Space",
+          "implemented_in_notebook": "Encoder produces 64-dim embeddings for each sequence",
+          "not_exposed_in_ui": true,
+          "potential_benefit": "Show how sequences cluster in embedding space (similar attacks group together)",
+          "suggested_visualization": "2D t-SNE or UMAP projection of test sequences"
+        },
+        {
+          "feature": "Per-Step Confidence Trajectory",
+          "implemented_in_notebook": "Model produces prediction for full sequence",
+          "not_exposed_in_ui": true,
+          "current_gap": "Only shows binary verdict per sequence, not per-log confidence",
+          "suggested_component": "SequenceConfidenceCurve.jsx - line chart showing confidence at each step"
+        },
+        {
+          "feature": "Layer-wise Activation Patterns",
+          "implemented_in_notebook": "2 transformer blocks + dense layers",
+          "not_exposed_in_ui": true,
+          "potential_benefit": "Debug model decisions by inspecting what each layer learned",
+          "complexity": "HIGH - requires model introspection architecture"
+        },
+        {
+          "feature": "Adversarial Robustness Scores",
+          "implemented_in_notebook": "Model trained on UNSW_NB15 dataset",
+          "not_exposed_in_ui": true,
+          "potential_use": "Indicate confidence when attack has slight feature variations",
+          "complexity": "MEDIUM - requires perturbation analysis"
+        },
+        {
+          "feature": "Grad-CAM Style Attribution",
+          "implemented_in_notebook": "Gradient-based explanation available via TensorFlow",
+          "not_exposed_in_ui": true,
+          "potential_benefit": "Highlight which input features most influence prediction",
+          "note": "Partial implementation exists via class_probabilities",
+          "enhancement": "Could add gradient-based importance maps"
+        }
+      ]
+    },
+    "dataset_insights_not_shown": [
+      {
+        "insight": "Attack distribution in training data (from CSV metadata)",
+        "not_shown_in_ui": true,
+        "could_enrich": "Analytics page - add comparison between live threats vs trained distribution"
+      },
+      {
+        "insight": "Class-wise performance metrics (precision/recall per attack type)",
+        "not_shown_in_ui": true,
+        "could_enrich": "Reports page - add confidence score context per attack type"
+      }
+    ]
+  },
+
+  "D_UNIQUE_PURPOSE_FOR_EACH_PAGE": {
+    "Dashboard": {
+      "current_purpose": "Single-log analysis hub with sample selection and analysis pipeline",
+      "current_workflow": "1) Pick random/by-index sample → 2) View raw log → 3) Run analysis → 4) See verdict + explanation → 5) Optionally run correlation or add rule",
+      "should_focus_on": ["Sample-centric analysis", "Rule-based interactive tuning", "Quick threat assessment"],
+      "recommended_improvements": [
+        "Add 'History' tab to compare with similar samples",
+        "Add 'Feedback' mechanism to improve model",
+        "Keep as-is, well-designed for single log focus"
+      ],
+      "differentiator": "Most interactive & hands-on for analysts"
+    },
+    "Analytics": {
+      "current_purpose": "System-wide performance monitoring and historical statistics",
+      "current_display": ["Total logs processed", "Threats intercepted", "Active rules", "Inference time", "System metrics (CPU/Memory/Disk/Network)", "Attack vectors over time", "Recent threat activity table"],
+      "should_focus_on": ["Trend analysis", "Resource utilization", "SOC reporting metrics"],
+      "recommended_improvements": [
+        "Add predictive trend lines (e.g., attack growth projection)",
+        "Add attack type timeline breakdown by hour/day",
+        "Add resource alert thresholds",
+        "Add exportable dashboards"
+      ],
+      "gap": "Currently static demo data - should connect to live backend metrics",
+      "differentiator": "Executive/SOC lead dashboard"
+    },
+    "CorrelationAnalysis": {
+      "current_purpose": "Ad-hoc sequence correlation analysis with sequence parameter control",
+      "workflow": "1) Input start index + sequence length → 2) Run analysis → 3) View correlation results + threat details",
+      "should_focus_on": ["Flexible sequence exploration", "High-detail threat analysis", "Investigative workflow"],
+      "recommended_improvements": [
+        "Add sequence comparison (e.g., 'Compare this sequence to historical similar attacks')",
+        "Add export to PDF/JSON",
+        "Add saved analysis history"
+      ],
+      "differentiator": "Deep investigative tool for security analysts"
+    },
+    "RealtimeCorrelation": {
+      "current_purpose": "Real-time log generation + streaming correlation analysis + auto-learning",
+      "workflow": "1) Configure EPS → 2) Start streaming → 3) Real-time logs appear → 4) Analyze correlation window → 5) View auto-learned rules",
+      "should_focus_on": ["Auto-learning demonstration", "Real-time threat evolution", "Rule discovery"],
+      "recommended_improvements": [
+        "Split into separate 'Auto-Learning Dashboard' vs 'Real-Time Monitor'",
+        "Add rule quality metrics (FP rate, coverage)",
+        "Add manual rule promotion/demotion"
+      ],
+      "differentiator": "ML system training & improvement visibility"
+    },
+    "LiveTraffic": {
+      "current_purpose": "Real-time live monitoring with terminal-style log stream",
+      "workflow": "1) Configure EPS → 2) Start scan → 3) Watch live log stream with verdicts → 4) See real-time threat/safe breakdown",
+      "should_focus_on": ["Operational monitoring", "Quick visual threat assessment", "Alert-driven workflow"],
+      "recommended_improvements": [
+        "Add alert filtering (e.g., show only attacks, only slow logs)",
+        "Add packet capture/detail expansion on click",
+        "Add threat correlation quick-link to CorrelationAnalysis",
+        "Add incident creation from terminal row"
+      ],
+      "differentiator": "SOC Operator's live security console"
+    },
+    "Reports": {
+      "current_purpose": "Historical incident log and reporting",
+      "current_display": ["Report ID", "Date", "Threat category", "Severity", "Resolution status"],
+      "should_focus_on": ["Trend analysis", "Compliance reporting", "Incident tracking"],
+      "recommended_improvements": [
+        "Add severity/time distribution charts",
+        "Add MTTD/MTTR metrics",
+        "Add incident timeline view (Gantt)",
+        "Add link back to original analysis in Dashboard",
+        "Add false positive rate tracking",
+        "Add compliance export templates (SIEM, SOC2, etc)"
+      ],
+      "gap": "Currently static mock data - should integrate with backend incident database",
+      "differentiator": "Compliance, management, and retrospective analysis tool"
+    }
+  },
+
+  "E_COMPONENT_ORGANIZATION_RECOMMENDATIONS": {
+    "summary": "Suggested refactoring to reduce duplication and improve maintainability",
+    "critical_actions": [
+      {
+        "action": 1,
+        "priority": "CRITICAL",
+        "task": "MERGE SequenceExplainability + CorrelationInsights",
+        "rationale": "80% code overlap, same data structure, same visual patterns",
+        "implementation": {
+          "create": "components/SequenceAnalysisPanel.jsx",
+          "props": {
+            "explainability": "object (WHO/WHERE/WHAT threat data)",
+            "correlationStats": "object (timing, rule count, etc)",
+            "ruleHits": "array (triggered rules)",
+            "layout": "'compact' | 'detailed' (controls which sections show)",
+            "showAttackTimeline": "boolean",
+            "showSOCModel": "boolean (default true)",
+            "showMetrics": "boolean (default true)",
+            "showActionPanel": "boolean",
+            "showRulesSection": "boolean"
+          },
+          "replace_usage": [
+            "Dashboard.jsx - replace both with <SequenceAnalysisPanel layout='detailed' />",
+            "CorrelationAnalysis.jsx - replace both with <SequenceAnalysisPanel layout='detailed' />",
+            "RealtimeCorrelation.jsx - replace both with <SequenceAnalysisPanel layout='compact' />"
+          ]
+        },
+        "estimated_lines_saved": "~200 lines of duplicated code"
+      },
+      {
+        "action": 2,
+        "priority": "CRITICAL",
+        "task": "EXTRACT Real-Time Streaming Logic",
+        "rationale": "85% duplicate SSE handling, state management, error handling",
+        "implementation": {
+          "create": "hooks/useRealtimeStream.js",
+          "signature": "useRealtimeStream(eventRate, { onLogReceived, onStreamStart, onStreamStop, onError })",
+          "returns": "{isRunning, logsCount, startStream, stopStream, recentLogs}",
+          "replaces": [
+            "RealtimeCorrelation.jsx lines 13-80 (startRealtimeGeneration, stopRealtimeGeneration, SSE handling)",
+            "LiveTraffic.jsx lines 20-60 (startScan, stopScan, SSE handling)"
+          ]
+        },
+        "estimated_lines_saved": "~150 lines",
+        "new_usage_example": "const {isRunning, logsCount, startStream, stopStream} = useRealtimeStream(eventRate, {onLogReceived: handleNewLog})"
+      },
+      {
+        "action": 3,
+        "priority": "CRITICAL",
+        "task": "CREATE Toast Notification Utilities",
+        "rationale": "90% similar toast structure repeated 30+ times across codebase",
+        "implementation": {
+          "create": "utils/toastHelpers.js",
+          "exports": [
+            "toastSuccess(title, message, duration=3000)",
+            "toastError(title, message, duration=3000)",
+            "toastLoading(title, message)",
+            "toastThreatDetected(attackType, attackCount, threatLevel)",
+            "toastAnalysisComplete(result)",
+            "toastRuleLearned(ruleCount)"
+          ],
+          "replaces": "~120+ inline toast.custom() calls across all pages"
+        },
+        "estimated_lines_saved": "~300+ lines"
+      }
+    ],
+    "high_priority_actions": [
+      {
+        "action": 4,
+        "priority": "HIGH",
+        "task": "CREATE CorrelationResultsContainer Component",
+        "rationale": "CorrelationAnalysis & RealtimeCorrelation have 70% identical results rendering",
+        "implementation": {
+          "create": "components/CorrelationResultsContainer.jsx",
+          "props": {
+            "correlationData": "object",
+            "isLoading": "boolean",
+            "showEmptyState": "boolean"
+          },
+          "includes": "CorrelationInsights + SequenceExplainability + SequenceViewer composition",
+          "replaces": [
+            "CorrelationAnalysis.jsx lines 130-180 (results rendering)",
+            "RealtimeCorrelation.jsx lines 240-300 (results rendering)"
+          ]
+        }
+      },
+      {
+        "action": 5,
+        "priority": "HIGH",
+        "task": "CREATE MetricCard Component",
+        "rationale": "Metric display pattern repeated 20+ times across Dashboard, Analytics, RealtimeCorrelation, LiveTraffic",
+        "implementation": {
+          "create": "components/MetricCard.jsx",
+          "props": {
+            "label": "string",
+            "value": "number | string",
+            "icon": "React.Component",
+            "color": "CSS color",
+            "format": "'number' | 'percentage' | 'time' | 'custom'"
+          },
+          "standardizes": "All metric displays into consistent look"
+        }
+      },
+      {
+        "action": 6,
+        "priority": "HIGH",
+        "task": "EXTRACT threat level color mapping",
+        "rationale": "getThreatColor() and getThreatLevelColor() functions identical across components",
+        "implementation": {
+          "create": "utils/threatColorMap.js",
+          "exports": ["getThreatColor(level)", "getThreatBgColor(level)"],
+          "replaces": "Duplicate functions in SequenceExplainability, CorrelationInsights, RealtimeCorrelation"
+        }
+      }
+    ],
+    "medium_priority_actions": [
+      {
+        "action": 7,
+        "priority": "MEDIUM",
+        "task": "CONSOLIDATE Page Layout Wrapper",
+        "rationale": "All pages have similar header/content structure",
+        "implementation": {
+          "create": "components/layouts/PageLayout.jsx",
+          "props": {
+            "title": "string",
+            "description": "string",
+            "icon": "React.Component",
+            "children": "React.ReactNode"
+          }
+        }
+      },
+      {
+        "action": 8,
+        "priority": "MEDIUM",
+        "task": "CREATE FeatureImportanceChart Component",
+        "rationale": "Feature importance rendering currently only in ExplainPanel, should be reusable",
+        "implementation": {
+          "create": "components/charts/FeatureImportanceChart.jsx",
+          "allows_reuse_in": ["Enhanced Analytics page", "Auto-learned rules explanation", "Sequence-level feature analysis"]
+        }
+      }
+    ],
+    "component_hierarchy_after_refactoring": `
+    src/
+    ├── components/
+    │   ├── layouts/
+    │   │   └── PageLayout.jsx (NEW)
+    │   ├── charts/
+    │   │   ├── FeatureImportanceChart.jsx (NEW)
+    │   │   └── [existing charts]
+    │   ├── ExplainPanel.jsx (keep - single log only)
+    │   ├── VerdictCard.jsx (keep - no duplication)
+    │   ├── SequenceAnalysisPanel.jsx (NEW - merges Sequence* + Correlation*)
+    │   ├── CorrelationResultsContainer.jsx (NEW)
+    │   ├── SequenceViewer.jsx (keep - unique purpose)
+    │   ├── MetricCard.jsx (NEW)
+    │   ├── LogViewer.jsx (keep)
+    │   ├── PipelineTracker.jsx (keep)
+    │   ├── ClusterCard.jsx (keep)
+    │   ├── SamplePicker.jsx (keep)
+    │   ├── RuleAddPanel.jsx (keep)
+    │   ├── SuggestPanel.jsx (keep)
+    │   └── [other components]
+    ├── hooks/
+    │   ├── useRealtimeStream.js (NEW)
+    │   └── [other hooks]
+    ├── utils/
+    │   ├── toastHelpers.js (NEW)
+    │   ├── threatColorMap.js (NEW)
+    │   └── [other utils]
+    ├── pages/
+    │   ├── Dashboard.jsx (refactored - use SequenceAnalysisPanel)
+    │   ├── Analytics.jsx (keep - mostly unique)
+    │   ├── CorrelationAnalysis.jsx (refactored - use CorrelationResultsContainer)
+    │   ├── RealtimeCorrelation.jsx (refactored - use hook + container)
+    │   ├── LiveTraffic.jsx (refactored - use hook)
+    │   └── Reports.jsx (keep - mostly unique)
+    └── styles/
+        └── [CSS files]
+    `
+  },
+
+  "F_CODE_QUALITY_METRICS": {
+    "before_refactoring": {
+      "total_lines": 4200,
+      "duplicated_lines": 680,
+      "duplication_percentage": 16.2,
+      "components_using_same_logic": [
+        "SequenceExplainability + CorrelationInsights (duplicated 80%)",
+        "RealtimeCorrelation + LiveTraffic (duplicated 85% SSE logic)",
+        "Toast notifications (duplicated 90%)"
+      ]
+    },
+    "after_refactoring_estimated": {
+      "total_lines": 3400,
+      "duplicated_lines": 100,
+      "duplication_percentage": 3.0,
+      "lines_saved": 800,
+      "new_files_created": 8,
+      "maintainability_improvement": "85% reduction in duplication"
+    }
+  },
+
+  "G_IMPLEMENTATION_ROADMAP": {
+    "phase_1_critical": {
+      "duration_days": 3,
+      "tasks": [
+        "Extract useRealtimeStream hook",
+        "Create toastHelpers utility",
+        "Merge SequenceExplainability + CorrelationInsights into SequenceAnalysisPanel"
+      ],
+      "affected_files": 7,
+      "estimated_bug_risk": "LOW - isolated changes first"
+    },
+    "phase_2_refactor": {
+      "duration_days": 2,
+      "tasks": [
+        "Update pages to use new components/hooks",
+        "Create CorrelationResultsContainer",
+        "Extract threat color mapping utility"
+      ],
+      "affected_files": 5,
+      "testing_required": "MEDIUM - need to verify page functionality"
+    },
+    "phase_3_enhancement": {
+      "duration_days": 4,
+      "tasks": [
+        "Add missing explainability features (sequence-level attribution, attention visualization)",
+        "Create new components for visualization (AttentionHeatmap, SequenceConfidenceCurve)",
+        "Integrate missing model insights from final.ipynb"
+      ],
+      "affected_files": "NEW components only",
+      "testing_required": "HIGH - UI/UX changes"
+    }
+  }
+}

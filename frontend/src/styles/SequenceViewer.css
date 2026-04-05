@@ -1,0 +1,249 @@
+.sequence-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sequence-item {
+    position: relative;
+    margin-bottom: 0;
+}
+
+.sequence-connector {
+    position: absolute;
+    left: 20px;
+    top: -12px;
+    width: 2px;
+    height: 12px;
+    background: var(--accent-green);
+    z-index: 0;
+}
+
+.sequence-entry {
+    border-left: 4px solid var(--accent-green);
+    padding: 12px;
+    margin-bottom: 2px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.sequence-entry:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-left-color: currentColor;
+}
+
+.sequence-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sequence-index {
+    font-weight: 700;
+    color: var(--text-secondary);
+    min-width: 35px;
+}
+
+.sequence-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-grow: 1;
+    min-width: 250px;
+}
+
+.sequence-decision {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.sequence-prediction {
+    padding: 2px 6px;
+    background: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--accent-blue);
+}
+
+.sequence-flow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    flex-grow: 1;
+    min-width: 300px;
+    color: var(--text-secondary);
+}
+
+.flow-item {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.flow-label {
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.flow-value {
+    font-family: 'Monaco', 'Courier', monospace;
+    color: var(--text-primary);
+}
+
+.flow-arrow {
+    color: var(--text-tertiary);
+    margin: 0 2px;
+}
+
+.flow-sep {
+    margin: 0 4px;
+    color: var(--text-tertiary);
+}
+
+.sequence-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    min-width: 50px;
+    text-align: right;
+}
+
+.sequence-details {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detail-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.detail-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    width: fit-content;
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+}
+
+.detail-rule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 4px 0;
+}
+
+.rule-name {
+    font-family: 'Monaco', 'Courier', monospace;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.rule-cat {
+    padding: 2px 4px;
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-orange);
+    border-radius: 2px;
+    font-size: 11px;
+}
+
+.detail-feature {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 4px 0;
+    color: var(--text-secondary);
+}
+
+.feature-score {
+    font-family: 'Monaco', 'Courier', monospace;
+    color: var(--accent-cyan);
+    font-weight: 600;
+}
+
+.timing-breakdown {
+    flex-direction: row;
+    gap: 16px;
+}
+
+.timing-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.timing-value {
+    font-family: 'Monaco', 'Courier', monospace;
+    color: var(--accent-cyan);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .sequence-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sequence-flow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .flow-arrow {
+        display: none;
+    }
+
+    .flow-sep {
+        display: none;
+    }
+
+    .timing-breakdown {
+        flex-direction: column;
+    }
+}

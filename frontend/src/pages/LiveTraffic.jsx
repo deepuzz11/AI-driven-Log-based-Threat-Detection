@@ -1,162 +1,161 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { toast } from 'react-hot-toast'
 import {
     Activity, Shield, ShieldAlert, Zap, Clock,
     ArrowRight, Terminal, Search, Trash2,
-    Play, Square, AlertTriangle, ShieldCheck
+    Play, Square, AlertTriangle, ShieldCheck, Loader2, Network
 } from 'lucide-react'
-import {
-    Chart as ChartJS, CategoryScale, LinearScale,
-    PointElement, LineElement, Title, Tooltip,
-    Legend, Filler
-} from 'chart.js'
-import { Line } from 'react-chartjs-2'
 
-ChartJS.register(
-    CategoryScale, LinearScale, PointElement,
-    LineElement, Title, Tooltip, Legend, Filler
-)
+const API = '/api'
 
 export default function LiveTraffic() {
     const [logs, setLogs] = useState([])
     const [isScanning, setIsScanning] = useState(false)
     const [totalEvents, setTotalEvents] = useState(0)
-    const [chartData, setChartData] = useState({
-        labels: Array(20).fill(''),
-        datasets: [{
-            label: 'Events Per Second',
-            data: Array(20).fill(0),
-            borderColor: 'rgba(59, 130, 246, 1)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0
-        }]
-    })
+    const [threatCount, setThreatCount] = useState(0)
+    const [eventRate, setEventRate] = useState('5')
+    const [isLoading, setIsLoading] = useState(false)
 
     const logContainerRef = useRef(null)
     const eventSourceRef = useRef(null)
-    const logCounter = useRef(0)
-    const epsBuffer = useRef(0)
+    const logCounterRef = useRef(0)
+    const threatCounterRef = useRef(0)
 
-    // Helper to generate consistent fake IPs for IDs
-    const getFakeIPs = (id) => {
-        const hash = (str) => {
-            let h = 0;
-            for (let i = 0; i < str.length; i++) h = (h << 5) - h + str.charCodeAt(i) | 0;
-            return Math.abs(h);
-        }
-        const h = hash(String(id));
-        const src = `192.168.1.${(h % 254) + 1}`;
-        const dst = `10.0.0.${((h >> 8) % 254) + 1}`;
-        const sPort = (h % 64512) + 1024;
-        const dPort = [80, 443, 8080, 22, 53, 3306, 5432][h % 7];
-        return { src: `${src}:${sPort}`, dst: `${dst}:${dPort}` };
-    }
-
-    const startScan = () => {
+    // Start real-time log generation
+    const startScan = useCallback(async () => {
         if (isScanning) return
-        setIsScanning(true)
+        
+        setIsLoading(true)
+        try {
+            const eps = parseInt(eventRate) || 5
+            
+            // Start backend log generation
+            const response = await fetch(`${API}/realtime/start?eps=${eps}`, { 
+                method: 'POST'
+            })
+            
+            if (!response.ok) {
+                throw new Error('Failed to start real-time generation')
+            }
 
-        // Use standard polling if SSE isn't implemented on backend yet, 
-        // or attempt EventSource if envisioned in plan.
-        // For now, let's simulate the arrival of logs if we were connected to SSE.
-        // The implementation plan mentions /api/stream.
-        const eventSource = new EventSource('/api/stream')
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data)
-            handleNewLog(data)
-        }
-        eventSource.onerror = () => {
-            console.error("SSE connection error")
-            eventSource.close()
+            setIsScanning(true)
+            logCounterRef.current = 0
+            threatCounterRef.current = 0
+            setTotalEvents(0)
+            setThreatCount(0)
+            setLogs([])
+            
+            toast.success(`Live traffic started at ${eps} events/sec`)
+
+            // Connect to SSE stream
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close()
+            }
+
+            eventSourceRef.current = new EventSource(`${API}/stream`)
+
+            eventSourceRef.current.onmessage = (event) => {
+                try {
+                    const analysis = JSON.parse(event.data)
+                    handleNewLog(analysis)
+                } catch (e) {
+                    console.error('Error parsing stream data:', e)
+                }
+            }
+
+            eventSourceRef.current.onerror = () => {
+                console.error("SSE connection error")
+                setIsScanning(false)
+                eventSourceRef.current?.close()
+                toast.error('Stream connection lost')
+            }
+
+        } catch (e) {
+            toast.error('Failed to start live traffic scan')
+            console.error(e)
             setIsScanning(false)
+        } finally {
+            setIsLoading(false)
         }
-        eventSourceRef.current = eventSource
-    }
+    }, [eventRate, isScanning])
 
-    const stopScan = () => {
-        if (eventSourceRef.current) {
-            eventSourceRef.current.close()
+    // Stop real-time log generation
+    const stopScan = useCallback(async () => {
+        try {
+            await fetch(`${API}/realtime/stop`, { method: 'POST' })
+            
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close()
+            }
+            
+            setIsScanning(false)
+            toast.success(`Live traffic stopped. Analyzed ${logCounterRef.current} events`)
+        } catch (e) {
+            toast.error('Failed to stop live traffic')
+            console.error(e)
         }
-        setIsScanning(false)
-    }
+    }, [])
 
-    const handleNewLog = useCallback((data) => {
-        const ips = getFakeIPs(data.index || Math.random())
+    const handleNewLog = useCallback((analysis) => {
+        logCounterRef.current += 1
+        setTotalEvents(logCounterRef.current)
+
+        const isAttack = analysis.decision === 'ATTACK'
+        if (isAttack) {
+            threatCounterRef.current += 1
+            setThreatCount(threatCounterRef.current)
+        }
+
         const newLog = {
-            ...data,
             id: Date.now() + Math.random(),
+            index: logCounterRef.current,
             timestamp: new Date().toLocaleTimeString(),
-            src_ip: ips.src,
-            dst_ip: ips.dst
+            ...analysis
         }
 
         setLogs(prev => {
             const updated = [newLog, ...prev]
-            return updated.slice(0, 100) // Keep last 100
+            return updated.slice(0, 150) // Keep last 150
         })
-
-        setTotalEvents(prev => prev + 1)
-        epsBuffer.current += 1
     }, [])
 
+
+    const clearLogs = () => {
+        setLogs([])
+        setThreatCount(0)
+        threatCounterRef.current = 0
+    }
+
+    // Cleanup on unmount
     useEffect(() => {
-        const interval = setInterval(() => {
-            setChartData(prev => {
-                const newData = [...prev.datasets[0].data.slice(1), epsBuffer.current]
-                const newLabels = [...prev.labels.slice(1), new Date().toLocaleTimeString([], { second: '2-digit' })]
-                epsBuffer.current = 0
-                return {
-                    ...prev,
-                    labels: newLabels,
-                    datasets: [{ ...prev.datasets[0], data: newData }]
-                }
-            })
-        }, 1000)
-        return () => clearInterval(interval)
-    }, [])
-
-    const clearLogs = () => setLogs([])
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 0 },
-        plugins: { legend: { display: false }, tooltip: { enabled: true } },
-        scales: {
-            x: { display: false },
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#71717a', font: { size: 10 } }
+        return () => {
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close()
             }
         }
-    }
+    }, [])
 
     return (
         <div className="live-traffic-page" style={{
-            height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            animation: 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+            gap: '24px',
+            animation: 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+            minHeight: '100%'
         }}>
 
-            {/* ── STICKY HEADER ── */}
+            {/* ── HEADER ── */}
             <div className="live-header card glass-panel slide-down" style={{
-                position: 'sticky',
-                top: '-32px', // Offset for app-main padding
-                zIndex: 100,
+                flexShrink: 0,
                 padding: '24px',
-                margin: '-32px -32px 24px -32px', // Bleed into padding
-                borderRadius: '0',
                 background: 'rgba(5, 5, 7, 0.85)',
                 backdropFilter: 'blur(32px) saturate(180%)',
-                borderBottom: '1px solid var(--border-bright)',
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4)'
+                border: '1px solid var(--border-bright)',
+                borderRadius: '16px'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
                     <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                             <div className={`status-pill ${isScanning ? 'active' : ''}`}>
                                 <div className="status-dot-inner" />
                                 <span>{isScanning ? 'LIVE MONITOR ACTIVE' : 'MONITOR STANDBY'}</span>
@@ -176,23 +175,32 @@ export default function LiveTraffic() {
                                 <span className="stat-label">TOTAL TRAFFIC</span>
                                 <span className="stat-value">{totalEvents.toLocaleString()}</span>
                             </div>
+                            <div style={{ width: '1px', background: 'var(--border)' }} />
                             <div className="stat-pill">
-                                <span className="stat-label">VELOCITY</span>
-                                <span className="stat-value" style={{ color: 'var(--accent-blue)' }}>{chartData.datasets[0].data[19]} EPS</span>
+                                <span className="stat-label">THREATS</span>
+                                <span className="stat-value" style={{ color: threatCount > 0 ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+                                    {threatCount}
+                                </span>
                             </div>
                         </div>
 
                         <div className="btn-group" style={{ display: 'flex', gap: '12px' }}>
                             {!isScanning ? (
-                                <button className="btn-neo btn-neo-primary" onClick={startScan}>
-                                    <Play size={14} fill="currentColor" /> START SCAN
+                                <button 
+                                    className="btn-neo btn-neo-primary" 
+                                    onClick={startScan}
+                                    disabled={isLoading}
+                                    style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
+                                >
+                                    {isLoading ? <Loader2 size={14} className="spinner" /> : <Play size={14} fill="currentColor" />}
+                                    {isLoading ? 'STARTING...' : 'START SCAN'}
                                 </button>
                             ) : (
                                 <button className="btn-neo btn-neo-danger" onClick={stopScan}>
                                     <Square size={14} fill="currentColor" /> STOP SCAN
                                 </button>
                             )}
-                            <button className="btn-neo btn-neo-secondary" onClick={clearLogs} title="Clear Terminal">
+                            <button className="btn-neo btn-neo-secondary" onClick={clearLogs} title="Clear logs">
                                 <Trash2 size={16} />
                             </button>
                         </div>
@@ -200,27 +208,51 @@ export default function LiveTraffic() {
                 </div>
             </div>
 
-            {/* ── MAIN CONTENT ── */}
-            <div className="live-content slide-up stagger-1" style={{ flex: 1, maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
-
-                {/* ── CHART PANEL ── */}
-                <div className="card glass-panel" style={{
-                    padding: '24px',
-                    marginBottom: '24px',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%)',
-                    border: '1px solid var(--border-bright)'
+            {/* ── CONFIGURATION PANEL ── */}
+            {!isScanning && (
+                <div className="config-panel card glass-panel slide-up" style={{
+                    padding: '20px',
+                    background: 'rgba(5, 5, 7, 0.5)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    maxWidth: '1600px',
+                    margin: '0 auto',
+                    width: '100%'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div className="icon-box-blue"><Activity size={16} /></div>
-                            <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Traffic Velocity (EPS)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                                Events Per Second (EPS)
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="50"
+                                value={eventRate}
+                                onChange={(e) => setEventRate(e.target.value)}
+                                style={{
+                                    padding: '10px 14px',
+                                    background: 'var(--bg-surface)',
+                                    border: '1px solid var(--border)',
+                                    color: '#fff',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    fontFamily: '"JetBrains Mono", monospace',
+                                    width: '100px'
+                                }}
+                            />
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Real-time 1s Window</div>
-                    </div>
-                    <div style={{ height: '160px' }}>
-                        <Line data={chartData} options={chartOptions} />
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            <p style={{ margin: '0 0 4px 0' }}>⚡ Higher EPS = More events/sec (1-50 recommended)</p>
+                            <p style={{ margin: '0' }}>💡 Start with 5-10 EPS for balanced analysis</p>
+                        </div>
                     </div>
                 </div>
+            )}
+
+            {/* ── MAIN CONTENT ── */}
+            <div className="live-content slide-up stagger-1" style={{ flex: 1, maxWidth: '1600px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                 {/* ── LOG TERMINAL ── */}
                 <div className="log-terminal card glass-panel slide-up stagger-2" style={{
@@ -237,23 +269,24 @@ export default function LiveTraffic() {
                         background: 'rgba(255,255,255,0.04)',
                         borderBottom: '1px solid var(--border)',
                         display: 'grid',
-                        gridTemplateColumns: '140px 100px 90px 150px 1fr',
-                        gap: '16px',
+                        gridTemplateColumns: '80px 90px 90px 140px 120px 1fr',
+                        gap: '12px',
                         fontSize: '11px',
                         fontWeight: 700,
                         color: 'var(--text-secondary)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                         position: 'sticky',
-                        top: '102px', // Adjusted for bleached sticky header
-                        zIndex: 50,
+                        top: 0,
+                        zIndex: 10,
                         backdropFilter: 'blur(10px)'
                     }}>
-                        <span>Timestamp</span>
+                        <span>Event #</span>
                         <span>Verdict</span>
                         <span>Protocol</span>
-                        <span>Source IP</span>
-                        <span>Activity / Payload Details</span>
+                        <span>Service</span>
+                        <span>Detection</span>
+                        <span>Details / Attack Type</span>
                     </div>
 
                     {/* Log List */}
@@ -267,9 +300,9 @@ export default function LiveTraffic() {
                     }}>
                         {logs.length === 0 ? (
                             <div style={{ padding: '80px 40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                <div className="terminal-empty-icon"><Terminal size={40} /></div>
+                                <div className="terminal-empty-icon"><Network size={40} /></div>
                                 <p style={{ fontSize: '15px', fontWeight: 500 }}>Awaiting incoming traffic stream...</p>
-                                <p style={{ fontSize: '13px', opacity: 0.6 }}>Start the scan to begin real-time analysis</p>
+                                <p style={{ fontSize: '13px', opacity: 0.6 }}>Click "START SCAN" to begin real-time monitoring</p>
                             </div>
                         ) : (
                             logs.map((log) => (
@@ -277,46 +310,75 @@ export default function LiveTraffic() {
                                     padding: '12px 24px',
                                     borderBottom: '1px solid rgba(255,255,255,0.03)',
                                     display: 'grid',
-                                    gridTemplateColumns: '140px 100px 90px 150px 1fr',
-                                    gap: '16px',
+                                    gridTemplateColumns: '80px 90px 90px 140px 120px 1fr',
+                                    gap: '12px',
                                     alignItems: 'center',
                                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                                    backgroundColor: log.decision === 'ATTACK' ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
-                                    borderLeft: log.decision === 'ATTACK' ? '2px solid var(--accent-red)' : '2px solid transparent'
+                                    backgroundColor: log.decision === 'ATTACK' ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
+                                    borderLeft: log.decision === 'ATTACK' ? '3px solid var(--accent-red)' : '3px solid transparent'
                                 }} className="log-row">
 
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{log.timestamp}</span>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>
+                                        #{log.index}
+                                    </span>
 
                                     <div>
-                                        <span className={`status-pill ${log.decision === 'ATTACK' ? 'danger' : 'success'}`} style={{ fontSize: '10px', padding: '1px 8px' }}>
-                                            {log.decision === 'ATTACK' ? 'DENY' : 'ALLOW'}
+                                        <span className={`status-pill ${log.decision === 'ATTACK' ? 'danger' : 'success'}`} style={{ fontSize: '10px', padding: '2px 8px' }}>
+                                            {log.decision === 'ATTACK' ? '🚨 DENY' : '✓ ALLOW'}
                                         </span>
                                     </div>
 
-                                    <span style={{ color: 'var(--accent-blue)', opacity: 0.9, fontWeight: 500 }}>{log.row?.proto?.toUpperCase() || 'TCP'}</span>
+                                    <span style={{ color: 'var(--accent-blue)', opacity: 0.9, fontWeight: 500 }}>
+                                        {log.row?.proto?.toUpperCase() || 'TCP'}
+                                    </span>
 
-                                    <span style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{log.src_ip.split(':')[0]}</span>
+                                    <span style={{ color: 'var(--text-primary)', opacity: 0.9, fontSize: '12px' }}>
+                                        {log.row?.service || 'HTTP'}
+                                    </span>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'nowrap', overflow: 'hidden' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '11px', flexShrink: 0 }}>
-                                            <span>{log.src_ip}</span>
-                                            <ArrowRight size={10} />
-                                            <span>{log.dst_ip}</span>
-                                        </div>
+                                    <div>
+                                        <span style={{
+                                            fontSize: '10px',
+                                            fontWeight: 600,
+                                            padding: '3px 8px',
+                                            borderRadius: '4px',
+                                            background: log.detection_method === 'RULE' 
+                                                ? 'rgba(168, 85, 247, 0.15)' 
+                                                : 'rgba(59, 130, 246, 0.15)',
+                                            color: log.detection_method === 'RULE' 
+                                                ? 'var(--accent-purple)' 
+                                                : 'var(--accent-blue)',
+                                            border: `1px solid ${log.detection_method === 'RULE' 
+                                                ? 'rgba(168, 85, 247, 0.3)' 
+                                                : 'rgba(59, 130, 246, 0.3)'}`
+                                        }}>
+                                            {log.detection_method === 'RULE' ? '📋 RULE' : '🤖 ML'}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
                                         <div className="payload-box" style={{
                                             padding: '4px 12px',
-                                            background: log.decision === 'ATTACK' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.03)',
+                                            background: log.decision === 'ATTACK' 
+                                                ? 'rgba(239, 68, 68, 0.12)' 
+                                                : 'rgba(255,255,255,0.03)',
                                             borderRadius: '6px',
                                             fontSize: '11px',
-                                            color: log.decision === 'ATTACK' ? 'var(--accent-red)' : 'var(--text-secondary)',
+                                            color: log.decision === 'ATTACK' 
+                                                ? 'var(--accent-red)' 
+                                                : 'var(--text-secondary)',
                                             fontWeight: log.decision === 'ATTACK' ? 600 : 400,
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            border: '1px solid transparent',
-                                            borderColor: log.decision === 'ATTACK' ? 'rgba(239, 68, 68, 0.2)' : 'transparent'
+                                            border: `1px solid ${log.decision === 'ATTACK' 
+                                                ? 'rgba(239, 68, 68, 0.3)' 
+                                                : 'transparent'}`,
+                                            flex: 1
                                         }}>
-                                            {log.decision === 'ATTACK' ? `DETECTION: ${log.prediction} | MITIGATED` : `Processed segment ${log.id.toString().slice(-4)} | Normal traffic`}
+                                            {log.decision === 'ATTACK' 
+                                                ? `${log.prediction} (${(log.confidence * 100).toFixed(0)}%)` 
+                                                : `Normal traffic (${(log.confidence * 100).toFixed(0)}% safe)`}
                                         </div>
                                     </div>
                                 </div>
@@ -331,6 +393,16 @@ export default function LiveTraffic() {
                 .live-traffic-page {
                     animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
                 }
+
+                .spinner {
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
                 .status-pill {
                     display: inline-flex;
                     align-items: center;
@@ -344,13 +416,24 @@ export default function LiveTraffic() {
                     color: var(--text-secondary);
                     letter-spacing: 0.04em;
                 }
+
                 .status-pill.active {
                     color: var(--accent-green);
                     border-color: rgba(16, 185, 129, 0.3);
                     background: rgba(16, 185, 129, 0.05);
                 }
-                .status-pill.success { color: var(--accent-green); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
-                .status-pill.danger { color: var(--accent-red); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+
+                .status-pill.success { 
+                    color: var(--accent-green); 
+                    background: rgba(16, 185, 129, 0.1); 
+                    border-color: rgba(16, 185, 129, 0.2); 
+                }
+
+                .status-pill.danger { 
+                    color: var(--accent-red); 
+                    background: rgba(239, 68, 68, 0.1); 
+                    border-color: rgba(239, 68, 68, 0.2); 
+                }
 
                 .status-dot-inner {
                     width: 6px;
@@ -358,6 +441,7 @@ export default function LiveTraffic() {
                     border-radius: 50%;
                     background: #52525b;
                 }
+
                 .active .status-dot-inner {
                     background: var(--accent-green);
                     box-shadow: 0 0 10px var(--accent-green);
@@ -372,8 +456,19 @@ export default function LiveTraffic() {
                     gap: 2px;
                     min-width: 120px;
                 }
-                .stat-label { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; }
-                .stat-value { font-size: 16px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+                .stat-label { 
+                    font-size: 10px; 
+                    font-weight: 700; 
+                    color: var(--text-muted); 
+                    letter-spacing: 0.05em; 
+                }
+
+                .stat-value { 
+                    font-size: 16px; 
+                    font-weight: 800; 
+                    font-family: 'JetBrains Mono', monospace; 
+                }
 
                 .btn-neo {
                     background: var(--bg-surface);
@@ -390,17 +485,29 @@ export default function LiveTraffic() {
                     transition: all 0.2s;
                     letter-spacing: 0.02em;
                 }
-                .btn-neo-primary { background: #fff; color: #000; border: none; }
-                .btn-neo-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,255,255,0.2); }
-                .btn-neo-danger { color: var(--accent-red); border-color: rgba(239, 68, 68, 0.3); }
-                .btn-neo-danger:hover { background: rgba(239, 68, 68, 0.1); }
-                .btn-neo-secondary:hover { background: var(--bg-surface-hover); }
 
-                .icon-box-blue {
-                    padding: 8px;
-                    background: rgba(59, 130, 246, 0.1);
-                    color: var(--accent-blue);
-                    border-radius: 8px;
+                .btn-neo-primary { 
+                    background: #fff; 
+                    color: #000; 
+                    border: none; 
+                }
+
+                .btn-neo-primary:hover:not(:disabled) { 
+                    transform: translateY(-1px); 
+                    box-shadow: 0 4px 20px rgba(255,255,255,0.2); 
+                }
+
+                .btn-neo-danger { 
+                    color: var(--accent-red); 
+                    border-color: rgba(239, 68, 68, 0.3); 
+                }
+
+                .btn-neo-danger:hover { 
+                    background: rgba(239, 68, 68, 0.1); 
+                }
+
+                .btn-neo-secondary:hover { 
+                    background: var(--bg-surface-hover); 
                 }
 
                 .log-row:hover {
@@ -419,10 +526,25 @@ export default function LiveTraffic() {
                     color: var(--text-muted);
                 }
 
+                .config-panel {
+                    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+
                 @keyframes pulse {
                     0% { transform: scale(1); opacity: 1; }
                     50% { transform: scale(1.4); opacity: 0.5; }
                     100% { transform: scale(1); opacity: 1; }
+                }
+
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-12px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
             `}} />
         </div>
