@@ -373,20 +373,22 @@ export default function Dashboard() {
                                             <p style={{ color: 'var(--text-secondary)' }}>Analyzing sequence correlations...</p>
                                         </div>
                                     ) : correlationData ? (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                             <CorrelationInsights
                                                 explainability={correlationData.explainability}
                                                 correlationStats={correlationData.correlation_stats}
                                                 ruleHits={correlationData.all_rule_hits}
                                             />
-                                            <SequenceExplainability
-                                                explainability={correlationData.explainability}
-                                                correlationStats={correlationData.correlation_stats}
-                                            />
-                                            <SequenceViewer
-                                                sequenceLogs={correlationData.sequence_logs}
-                                                explainability={correlationData.explainability}
-                                            />
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                                <SequenceExplainability
+                                                    explainability={correlationData.explainability}
+                                                    correlationStats={correlationData.correlation_stats}
+                                                />
+                                                <SequenceViewer
+                                                    sequenceLogs={correlationData.sequence_logs}
+                                                    explainability={correlationData.explainability}
+                                                />
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="card" style={{ padding: '32px', textAlign: 'center' }}>

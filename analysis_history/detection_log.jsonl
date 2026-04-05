@@ -1,0 +1,35 @@
+{"timestamp": "2026-04-05T16:02:59.212503", "sample_index": 76235, "attack_type": "Malware/Backdoor", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:03:51.738929", "sample_index": 76235, "attack_type": "Malware/Backdoor", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:05:12.894204", "sample_index": 40589, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:05:15.418730", "sample_index": 40925, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:05:17.958925", "sample_index": 80413, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:05:56.777576", "sample_index": 67413, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:05:59.784550", "sample_index": 32248, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:03.109156", "sample_index": 44183, "attack_type": "DoS/DDoS Attacks", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:06:05.792752", "sample_index": 49914, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:08.308914", "sample_index": 1, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:11.017400", "sample_index": 57042, "attack_type": "RECON", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:14.315970", "sample_index": 44166, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:17.664234", "sample_index": 26508, "attack_type": "DoS/DDoS Attacks", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:06:20.523686", "sample_index": 30284, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:25.883900", "sample_index": 6945, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:28.392641", "sample_index": 89991, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:31.387186", "sample_index": 29729, "attack_type": "DoS/DDoS Attacks", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:06:34.939932", "sample_index": 16772, "attack_type": "Recon/Scanning", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:06:45.565560", "sample_index": 1, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:06:48.479206", "sample_index": 50345, "attack_type": "DOS", "method": "rule-based", "rules_matched": 2}
+{"timestamp": "2026-04-05T16:06:51.835355", "sample_index": 42116, "attack_type": "DoS/DDoS Attacks", "method": "ml-fallback", "rules_matched": 0}
+{"timestamp": "2026-04-05T16:06:54.444965", "sample_index": 44418, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:00.185292", "sample_index": 63679, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:02.921599", "sample_index": 42902, "attack_type": "ANALYSIS", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:05.971577", "sample_index": 75143, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:11.710666", "sample_index": 26776, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 5}
+{"timestamp": "2026-04-05T16:07:14.556688", "sample_index": 35836, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:17.287382", "sample_index": 37302, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:20.094705", "sample_index": 63250, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 5}
+{"timestamp": "2026-04-05T16:07:22.726847", "sample_index": 76795, "attack_type": "EXPLOITS", "method": "rule-based", "rules_matched": 5}
+{"timestamp": "2026-04-05T16:07:25.588685", "sample_index": 58626, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:32.423619", "sample_index": 52544, "attack_type": "GENERIC", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:35.798972", "sample_index": 79882, "attack_type": "DOS", "method": "rule-based", "rules_matched": 2}
+{"timestamp": "2026-04-05T16:07:39.206258", "sample_index": 50814, "attack_type": "FUZZERS", "method": "rule-based", "rules_matched": 1}
+{"timestamp": "2026-04-05T16:07:45.566402", "sample_index": 50403, "attack_type": "FUZZERS", "method": "rule-based", "rules_matched": 1}

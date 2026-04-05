@@ -79,7 +79,7 @@ ATTACK_CATEGORY_MAP = {
     "Reconnaissance": ("recon", "Reconnaissance attack detected"),
     "Shellcode": ("shellcode", "Shellcode injection detected"),
     "Worms": ("worms", "Worm/Malware detected"),
-    "Backdoors": ("backdoor", "Backdoor access detected"),
+    "Backdoor": ("backdoor", "Backdoor access detected"),
     "Analysis": ("analysis", "Network analysis attack detected"),
     "Intrusion": ("intrusion", "Intrusion detected"),
     "Anomaly": ("anomaly", "Anomalous behavior detected"),
@@ -179,7 +179,7 @@ def build_log_string(row):
     proto = str(row.get("proto", "")).lower()
     service = str(row.get("service", "-")).lower().replace("-", "")
     state = str(row.get("state", "")).lower()
-    attack_cat = str(row.get("attack_cat", "")).lower()
+    attack_cat = str(row.get("attack_cat", "Unknown")).strip()
     
     text_parts = []
     
@@ -192,16 +192,23 @@ def build_log_string(row):
         text_parts.append(state)
     
     # Add category-specific keywords that rules look for
-    for key, (category, description) in ATTACK_CATEGORY_MAP.items():
-        if key.lower() == attack_cat:
-            # Add both the description and the category name for rule matching
+    matched = False
+    for key, (category_kw, description) in ATTACK_CATEGORY_MAP.items():
+        if key.lower() == attack_cat.lower():
+            # Add both the description and the category keyword for rule matching
             text_parts.append(description.lower())
-            text_parts.append(category)
+            text_parts.append(category_kw)
+            matched = True
             break
-    else:
-        # If unknown category, still add category name
-        if attack_cat not in ["normal", "benign", "none", ""]:
-            text_parts.append(f"{attack_cat} attack detected")
+    
+    # If category wasn't matched but exists, still try to add it
+    if not matched and attack_cat.lower() not in ["normal", "benign", "none", ""]:
+        text_parts.append(f"{attack_cat.lower()} attack detected")
+        text_parts.append(attack_cat.lower())
+    
+    # Always ensure Normal/Benign traffic doesn't trigger attack rules
+    if attack_cat.lower() in ["normal", "benign", "none"]:
+        text_parts = ["benign", "normal", "no threat detected"]
     
     # Combine into single text
     text = " ".join(text_parts)
@@ -774,6 +781,28 @@ def correlate_sequence(start_idx: int, seq_len: int = Query(10)):
         },
         "all_rule_hits": all_rule_hits[:20]  # Top 20 rule hits
     }
+
+
+@app.get("/api/rules")
+def get_rules(category: str = "ALL"):
+    """Return list of all rules with metadata"""
+    rules_list = []
+    for rule_name, pattern_obj in patterns.items():
+        meta = rule_meta.get(rule_name, {})
+        rule_cat = meta.get("category", "unknown")
+        
+        if category != "ALL" and rule_cat.lower() != category.lower():
+            continue
+            
+        rules_list.append({
+            "name": rule_name,
+            "pattern": pattern_obj.pattern,
+            "category": rule_cat,
+            "severity": meta.get("severity", "MEDIUM"),
+            "remedy": meta.get("remedy", "Investigate suspicious activity.")
+        })
+    
+    return {"rules": sorted(rules_list, key=lambda x: x["name"]), "total": len(rules_list)}
 
 
 @app.post("/api/add-rule")
