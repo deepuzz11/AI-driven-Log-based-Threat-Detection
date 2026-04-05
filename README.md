@@ -1,6 +1,6 @@
 # AI-Driven Log-Based Threat Detection
 
-> A full-stack, real-time network threat detection platform powered by a hybrid Rule Engine + XGBoost ML pipeline, with a premium React dashboard and a live traffic simulator.
+> A full-stack, real-time network threat detection platform powered by a hybrid Rule Engine + XGBoost ML pipeline, with a React dashboard and a live traffic simulator.
 
 ---
 
