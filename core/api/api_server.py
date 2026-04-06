@@ -439,6 +439,39 @@ def perform_analysis(row):
     is_attack_rule = len(rule_hits) > 0
     is_attack_ml   = pred_ml.lower() not in ("benign", "normal")
     
+    # Auto-learning logic: if ML detects attack but rules don't
+    auto_rule_added = False
+    new_rule_name = None
+    if is_attack_ml and not is_attack_rule:
+        # Generate and add rule automatically
+        attack_type = pred_ml.lower().replace(" ", "_")
+        new_rule_name = f"auto_learned_{attack_type}_{int(time.time())}"
+        
+        # Build regex pattern from row data
+        proto = str(row.get("proto", "")).upper()
+        service = str(row.get("service", "")).lower()
+        state = str(row.get("state", "")).lower()
+        
+        # Create a more specific pattern if possible
+        pattern_parts = []
+        if proto: pattern_parts.append(re.escape(proto))
+        if service and service != "-" and service != "none": pattern_parts.append(re.escape(service))
+        if state and state != "-" and state != "none": pattern_parts.append(re.escape(state))
+        
+        if pattern_parts:
+            # We want to match all these parts in order
+            pattern = ".*".join(pattern_parts)
+            remedy = f"Auto-learned from ML detection - {pred_ml}"
+            
+            added = add_rule_to_file(
+                new_rule_name,
+                pattern,
+                pred_ml,
+                severity="HIGH",
+                remedy=remedy
+            )
+            auto_rule_added = added
+
     # Final decision strategy:
     # If rules hit, we prioritize that category but still show ML confidence.
     # If no rules hit but ML detects threat, we show ML results.
@@ -479,10 +512,11 @@ def perform_analysis(row):
         "feature_importance": feat_imp or [],
         "ground_truth": row.get("attack_cat", ""),
         "raw_log": build_log_string_industry(row),
-        "row": row
+        "row": row,
+        "auto_rule_added": auto_rule_added,
+        "new_rule_name": new_rule_name if auto_rule_added else None
     }
 
-    
     return result
 
 
@@ -550,40 +584,11 @@ def stop_realtime_generation():
 
 @app.post("/api/realtime/analyze-with-learning")
 def realtime_analyze_with_learning(body: AnalyzeRequest):
-    """Analyze log and auto-learn rules if high confidence attack detected"""
+    """Analyze log and return result (auto-learning handled by perform_analysis)"""
     if not body.row:
         raise HTTPException(status_code=400, detail="No row data provided")
     
-    analysis = perform_analysis(body.row)
-    
-    # Auto-learning logic for both ML and rule-based paths
-    if analysis["decision"] == "ATTACK" and analysis["confidence"] is not None:
-        if analysis["confidence"] >= 85:  # High confidence threshold
-            # Generate and add rule automatically
-            attack_type = analysis["prediction"].lower().replace(" ", "_")
-            rule_name = f"auto_learned_{attack_type}_{int(time.time())}"
-            
-            # Build regex pattern from row data
-            proto = str(body.row.get("proto", "")).upper()
-            service = str(body.row.get("service", "")).lower()
-            
-            if proto and service:
-                pattern = f"({proto}.*{service})|({attack_type})"
-                remedy = f"Auto-learned from {analysis['method']} - {analysis['prediction']}"
-                
-                added = add_rule_to_file(
-                    rule_name,
-                    pattern,
-                    analysis["prediction"],
-                    severity="HIGH",
-                    remedy=remedy
-                )
-                
-                analysis["auto_rule_added"] = added
-                if added:
-                    analysis["new_rule_name"] = rule_name
-    
-    return analysis
+    return perform_analysis(body.row)
 
 
 @app.post("/api/realtime/correlate-stream")
@@ -639,33 +644,12 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
                 threat_sources.add(src)
                 threat_targets.add(dst)
                 
-                # Auto-learn from high-confidence attacks
-                if analysis["confidence"] is not None and analysis["confidence"] >= 85:
-                    attack_type = analysis["prediction"].lower().replace(" ", "_")
-                    rule_name = f"realtime_learned_{attack_type}_{int(time.time())+idx}"
-                    
-                    proto = str(row_data.get("proto", "")).upper()
-                    service = str(row_data.get("service", "")).lower()
-                    
-                    if proto and service:
-                        pattern = f"({proto}.*{service})|({attack_type})"
-                        remedy = f"Real-time learned from {analysis['method']} - {analysis['prediction']}"
-                        
-                        added = add_rule_to_file(
-                            rule_name,
-                            pattern,
-                            analysis["prediction"],
-                            severity="HIGH",
-                            remedy=remedy
-                        )
-                        
-                        if added:
-                            auto_learned_rules.append({
-                                "rule_name": rule_name,
-                                "pattern": pattern,
-                                "category": analysis["prediction"],
-                                "source": analysis["method"]
-                            })
+                if analysis.get("auto_rule_added"):
+                    auto_learned_rules.append({
+                        "rule_name": analysis["new_rule_name"],
+                        "category": analysis["prediction"],
+                        "source": analysis["method"]
+                    })
         
         except json.JSONDecodeError:
             continue

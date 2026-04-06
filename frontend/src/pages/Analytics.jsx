@@ -147,19 +147,19 @@ export default function Analytics() {
     const recentThreats = analyticsData.recent_threats
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '0' }}>
-
-            {/* ── HEADER + STATS ── */}
-            <div className="card glass-panel fade-in-scale stagger-1" style={{ padding: '28px' }}>
-                <div className="slide-up stagger-2">
-                    <h1 className="text-gradient" style={{ fontSize: '24px', fontWeight: 600, marginBottom: '4px' }}>
-                        Threat Analytics Platform
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
-                        System-wide overview of logging activity and hybrid engine interception rates.
-                    </p>
+        <div className="page analytics-page fade-in-scale stagger-1" style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
+            <div className="page-header" style={{ padding: '0 0 24px 0', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
+                <div className="page-title-section">
+                    <Activity size={28} className="page-icon active" />
+                    <div>
+                        <h1 style={{ margin: 0, fontSize: '24px' }}>Threat Analytics Platform</h1>
+                        <p style={{ margin: 0, opacity: 0.7, fontSize: '13px' }}>System-wide overview of logging activity and hybrid engine interception rates</p>
+                    </div>
                 </div>
+            </div>
 
+            {/* ── STATS ── */}
+            <div className="card glass-panel fade-in-scale stagger-1" style={{ padding: '28px', marginBottom: '24px' }}>
                 <div className="slide-up stagger-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                     {stats.map((s, i) => {
                         const Icon = s.icon

@@ -11,12 +11,6 @@ export default function Rules() {
     const [searchTerm, setSearchTerm] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('ALL')
     const [categories, setCategories] = useState([])
-    const [newRuleForm, setNewRuleForm] = useState({
-        name: '',
-        regex: '',
-        category: 'generic',
-        severity: 'MEDIUM'
-    })
 
     useEffect(() => {
         loadRules()
@@ -60,34 +54,6 @@ export default function Rules() {
         setFilteredRules(filtered)
     }
 
-    const addRule = async () => {
-        if (!newRuleForm.name || !newRuleForm.regex) {
-            toast.error('Name and Regex are required')
-            return
-        }
-        try {
-            const r = await fetch(`${API}/add-rule`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newRuleForm)
-            })
-            const data = await r.json()
-            if (data.added) {
-                toast.success(`Rule "${newRuleForm.name}" added successfully`)
-                setNewRuleForm({
-                    name: '',
-                    regex: '',
-                    category: 'generic',
-                    severity: 'MEDIUM'
-                })
-                await loadRules()
-            } else {
-                toast.error('Rule already exists')
-            }
-        } catch (e) {
-            toast.error('Failed to add rule')
-        }
-    }
 
     const getCategoryColor = (category) => {
         const colors = {
@@ -153,70 +119,24 @@ export default function Rules() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px', marginBottom: '40px', alignItems: 'start' }}>
-                <div className="card glass-panel" style={{ padding: '28px', border: '1px solid var(--border-bright)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                        <div style={{ background: 'var(--accent-blue)', padding: '8px', borderRadius: '8px' }}><Plus size={20} color="white" /></div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Forge New Signature</h2>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                            <label className="input-label">Signature Identifier</label>
-                            <input className="input-pro" type="text" placeholder="e.g. brute_force_attempt" value={newRuleForm.name} onChange={(e) => setNewRuleForm({ ...newRuleForm, name: e.target.value })} />
-                        </div>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                            <label className="input-label">Regex Pattern</label>
-                            <input className="input-pro" type="text" placeholder="e.g. \\b(admin|root)\\b" value={newRuleForm.regex} onChange={(e) => setNewRuleForm({ ...newRuleForm, regex: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="input-label">Category</label>
-                            <select className="input-pro" value={newRuleForm.category} onChange={(e) => setNewRuleForm({ ...newRuleForm, category: e.target.value })}>
-                                <option value="generic">Generic</option>
-                                <option value="dos">DoS/DDoS</option>
-                                <option value="recon">Reconnaissance</option>
-                                <option value="backdoor">Backdoor</option>
-                                <option value="exploits">Exploits</option>
-                                <option value="fuzzers">Fuzzers</option>
-                                <option value="worms">Worms</option>
-                                <option value="analysis">Analysis</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="input-label">Severity</label>
-                            <select className="input-pro" value={newRuleForm.severity} onChange={(e) => setNewRuleForm({ ...newRuleForm, severity: e.target.value })}>
-                                <option value="LOW">Low</option>
-                                <option value="MEDIUM">Medium</option>
-                                <option value="HIGH">High</option>
-                                <option value="CRITICAL">Critical</option>
-                            </select>
-                        </div>
-                        <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
-                            <button className="btn-neo btn-neo-primary" onClick={addRule} style={{ width: '100%', justifyContent: 'center', height: '48px' }}>
-                                <Plus size={18} /> INITIALIZE RULE
-                            </button>
-                        </div>
-                    </div>
+            <div className="card glass-panel" style={{ padding: '28px', marginBottom: '40px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                    <div style={{ background: 'var(--accent-purple)', padding: '8px', borderRadius: '8px' }}><Filter size={20} color="white" /></div>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Signature Distribution</h2>
                 </div>
-
-                <div className="card glass-panel" style={{ padding: '28px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                        <div style={{ background: 'var(--accent-purple)', padding: '8px', borderRadius: '8px' }}><Filter size={20} color="white" /></div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Distribution</h2>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '380px', overflowY: 'auto' }}>
-                        {categories.filter(c => c !== 'ALL').map(cat => {
-                            const count = rules.filter(r => (r.category || '').toLowerCase() === cat.toLowerCase()).length
-                            return (
-                                <div key={cat} onClick={() => setCategoryFilter(cat)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', cursor: 'pointer', border: categoryFilter === cat ? '1px solid var(--accent-purple)' : '1px solid transparent' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: getCategoryColor(cat) }} />
-                                        <span style={{ fontSize: '13px', fontWeight: 600, textTransform: 'capitalize' }}>{cat}</span>
-                                    </div>
-                                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: '20px' }}>{count}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                    {categories.filter(c => c !== 'ALL').map(cat => {
+                        const count = rules.filter(r => (r.category || '').toLowerCase() === cat.toLowerCase()).length
+                        return (
+                            <div key={cat} onClick={() => setCategoryFilter(cat)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', cursor: 'pointer', border: categoryFilter === cat ? '1px solid var(--accent-purple)' : '1px solid transparent' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: getCategoryColor(cat) }} />
+                                    <span style={{ fontSize: '13px', fontWeight: 600, textTransform: 'capitalize' }}>{cat}</span>
                                 </div>
-                            )
-                        })}
-                    </div>
+                                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: '20px' }}>{count}</div>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
 

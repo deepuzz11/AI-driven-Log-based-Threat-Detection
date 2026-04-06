@@ -1,180 +1,161 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root,
 :root[data-theme="dark"] {
-  /* Ultra-Premium Strategic Palette */
+  /* Apex Premium Command Palette */
   --bg-base: #020408;
-  --bg-app: #05070c;
-  --bg-surface: rgba(15, 23, 42, 0.4);
-  --bg-surface-hover: rgba(30, 41, 59, 0.6);
-
+  --bg-app: #04060a;
+  --bg-surface: rgba(15, 23, 42, 0.45);
+  
   /* Tactical Glassmorphism */
-  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-bg: rgba(10, 15, 25, 0.65);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.2);
+  --glass-border-hover: rgba(59, 130, 246, 0.25);
 
   /* High-Authority Borders */
-  --border: rgba(255, 255, 255, 0.05);
-  --border-bright: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.04);
+  --border-bright: rgba(255, 255, 255, 0.1);
 
-  /* Typography */
-  --text-primary: #f8fafc;
+  /* Typography - Calibrated Scales */
+  --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-muted: #475569;
+  --font-size-base: 13.5px;
+  --font-size-tech: 11px;
 
-  /* Professional Accents */
+  /* Apex Accents */
   --accent-blue: #3b82f6;
-  --accent-purple: #a855f7;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
   --accent-cyan: #06b6d4;
-  --accent-amber: #f59e0b;
+  --accent-red: #f43f5e;
+  --accent-green: #10b981;
+  --accent-purple: #a855f7;
 
-  /* Kinetic Glows */
-  --shadow-glow: 0 0 24px rgba(59, 130, 246, 0.15);
-  --shadow-glow-active: 0 0 40px rgba(139, 92, 246, 0.3);
-
-  /* Border Radius & Transitions */
-  --radius-lg: 16px;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --transition-pro: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Command Glows */
+  --shadow-apex: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(59, 130, 246, 0.1);
+  --transition-apex: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: var(--font-size-base);
   background-color: var(--bg-base);
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.625;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   overflow: hidden;
-  letter-spacing: -0.01em;
 }
 
 h1, h2, h3, h4, .text-gradient {
   font-family: 'Outfit', sans-serif;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
-/* ── ELITE PANEL SYSTEM ──────────────────────────────── */
+/* ── APEX PANEL ARCHITECTURE ─────────────────────────── */
 .card {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  overflow: hidden;
-  transition: var(--transition-pro);
+  transition: var(--transition-apex);
   position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .card:hover {
   border-color: var(--glass-border-hover);
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--shadow-apex);
 }
 
 .card-header {
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.03);
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--border);
   font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
   display: flex;
   align-items: center;
 }
 
-.card-body {
-  padding: 24px;
+/* ── APEX LAYOUT ENGINE ──────────────────────────────── */
+.layout-apex {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1800px;
+  margin: 0 auto;
+  align-items: start;
+  padding-bottom: 40px;
 }
 
-/* ── PRO-INGESTION INPUTS ────────────────────────────── */
+.command-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── PRO-INPUTS ──────────────────────────────────────── */
 .form-input {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   color: var(--text-primary);
   padding: 10px 14px;
-  font-size: 14px;
-  transition: var(--transition-pro);
+  font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
+  transition: var(--transition-apex);
 }
 
 .form-input:focus {
   outline: none;
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
 }
 
-/* ── MECHANICAL BUTTONS ──────────────────────────────── */
-.btn-neo {
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  font-weight: 700;
+/* ── APEX BUTTONS ────────────────────────────────────── */
+.btn-apex {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 800;
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: var(--transition-pro);
+  transition: var(--transition-apex);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   border: 1px solid transparent;
 }
 
-.btn-neo-primary {
+.btn-apex-primary {
   background: var(--accent-blue);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
-.btn-neo-primary:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+.btn-apex-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45);
 }
 
-.btn-neo-primary:active {
-  transform: translateY(0);
-}
-
-.btn-neo-secondary {
-  background: rgba(255, 255, 255, 0.03);
+.btn-apex-secondary {
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-bright);
   color: var(--text-secondary);
 }
 
-.btn-neo-secondary:hover {
+.btn-apex-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-blue);
   color: #fff;
-  border-color: var(--glass-border-hover);
-}
-
-/* ── TACTICAL LAYOUTS ────────────────────────────────── */
-.layout-pro {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 32px;
-  max-width: 1700px;
-  margin: 0 auto;
-  align-items: start;
-}
-
-.side-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.center-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
 }
 @keyframes grid-pan {
   0% {
