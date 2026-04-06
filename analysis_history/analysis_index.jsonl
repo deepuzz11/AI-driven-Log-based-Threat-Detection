@@ -85,3 +85,4 @@
 {"timestamp": "2026-04-06T15:47:37.011412", "sample_index": 33713, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.98, "rule_hits_count": 0, "total_time_ms": 317.16}
 {"timestamp": "2026-04-06T15:47:41.524582", "sample_index": 33713, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.98, "rule_hits_count": 0, "total_time_ms": 939.46}
 {"timestamp": "2026-04-06T15:47:43.451975", "sample_index": 68940, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 97.19, "rule_hits_count": 0, "total_time_ms": 138.92}
+{"timestamp": "2026-04-06T15:52:18.057577", "sample_index": 5400, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 100.44}
