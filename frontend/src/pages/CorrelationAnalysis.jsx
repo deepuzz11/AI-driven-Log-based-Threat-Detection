@@ -101,21 +101,21 @@ export default function CorrelationAnalysis() {
     }
 
     return (
-        <div className="page correlation-analysis-page">
-            <div className="page-header">
+        <div className="page correlation-analysis-page correlation-page">
+            <div className="page-header" style={{ padding: '0 0 24px 0', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
                 <div className="page-title-section">
                     <Zap size={28} className="page-icon" />
                     <div>
-                        <h1>Log Sequence Correlation</h1>
-                        <p>Analyze sequences of logs to detect correlated threats and attack patterns</p>
+                        <h1 style={{ margin: 0, fontSize: '24px' }}>Log Sequence Correlation</h1>
+                        <p style={{ margin: 0, opacity: 0.7, fontSize: '13px' }}>Analyze sequences of logs to detect correlated threats and attack patterns</p>
                     </div>
                 </div>
             </div>
 
             <div className="page-content">
                 {/* Input Section */}
-                <div className="card input-card">
-                    <div className="card-header">Sequence Selection</div>
+                <div className="card input-card" style={{ marginBottom: '24px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
+                    <div className="card-header" style={{ background: 'var(--bg-surface)', padding: '12px 20px' }}>Sequence Selection</div>
                     <div className="card-body">
                         <div className="input-grid">
                             <div className="input-group">

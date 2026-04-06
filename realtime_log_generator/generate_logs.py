@@ -153,6 +153,56 @@ class SyntheticLogGenerator:
         
         return log_entry
     
+    def generate_syslog_rfc5424(self, log_entry):
+        """Convert log entry to RFC 5424 syslog format."""
+        timestamp = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(log_entry.get('timestamp', time.time())))
+        hostname = 'edge-fw-01'
+        app_name = 'traffic-monitor'
+        procid = random.randint(1000, 9999)
+        msgid = 'ID' + str(random.randint(100, 999))
+        
+        src_ip = log_entry.get('src_ip', 'unknown')
+        dst_ip = log_entry.get('dst_ip', 'unknown')
+        src_port = log_entry.get('src_port', '0')
+        dst_port = log_entry.get('dst_port', '0')
+        proto = log_entry.get('proto', 'unknown').upper()
+        
+        msg = f"type=flow-log src={src_ip} spt={src_port} dst={dst_ip} dpt={dst_port} proto={proto} action=ALLOW"
+        return f"<134>1 {timestamp} {hostname} {app_name} {procid} {msgid} - {msg}"
+
+    def generate_vpc_flow_log(self, log_entry):
+        """Convert log entry to AWS VPC Flow Log format."""
+        # version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status
+        version = "2"
+        account_id = "123456789012"
+        interface_id = "eni-0a1b2c3d4e5f6g7h8"
+        src_ip = log_entry.get('src_ip', 'unknown')
+        dst_ip = log_entry.get('dst_ip', 'unknown')
+        src_port = log_entry.get('src_port', '0')
+        dst_port = log_entry.get('dst_port', '0')
+        proto_num = "6" if log_entry.get('proto') == 'tcp' else "17" if log_entry.get('proto') == 'udp' else "1"
+        pkts = log_entry.get('spkts', 0)
+        bytes_val = log_entry.get('sbytes', 0)
+        start_time = int(log_entry.get('timestamp', time.time()))
+        end_time = start_time + random.randint(1, 10)
+        action = "ACCEPT"
+        log_status = "OK"
+        
+        return f"{version} {account_id} {interface_id} {src_ip} {dst_ip} {src_port} {dst_port} {proto_num} {pkts} {bytes_val} {start_time} {end_time} {action} {log_status}"
+
+    def generate_firewall_log(self, log_entry):
+        """Convert log entry to Cisco/Palo Alto style firewall event."""
+        # Date Time: %ASA-6-302013: Built outbound TCP connection 123456 for outside:1.1.1.1/80 (1.1.1.1/80) to inside:10.0.0.1/1234 (10.0.0.1/1234)
+        timestamp = time.strftime('%b %d %Y %H:%M:%S', time.localtime(log_entry.get('timestamp', time.time())))
+        conn_id = random.randint(1000000, 9999999)
+        src_ip = log_entry.get('src_ip', 'unknown')
+        dst_ip = log_entry.get('dst_ip', 'unknown')
+        src_port = log_entry.get('src_port', '0')
+        dst_port = log_entry.get('dst_port', '0')
+        proto = log_entry.get('proto', 'unknown').upper()
+        
+        return f"{timestamp}: %IDS-4-TRAFFIC: {proto} flow {conn_id} from {src_ip}:{src_port} to {dst_ip}:{dst_port} status=DETECTED packets={log_entry.get('spkts', 0)}"
+
     def generate_syslog_format(self, log_entry):
         """Convert log entry to standard syslog format."""
         timestamp = time.strftime('%b %d %H:%M:%S', time.localtime(log_entry.get('timestamp', time.time())))
@@ -175,8 +225,16 @@ class SyntheticLogGenerator:
         return syslog_msg
 
 def build_log_string(row, generator):
-    """Generate a standard syslog format representation."""
-    return generator.generate_syslog_format(row)
+    """Generate a random industry-standard log format representation."""
+    choice = random.random()
+    if choice < 0.25:
+        return generator.generate_syslog_rfc5424(row)
+    elif choice < 0.50:
+        return generator.generate_vpc_flow_log(row)
+    elif choice < 0.75:
+        return generator.generate_firewall_log(row)
+    else:
+        return generator.generate_syslog_format(row)
 
 def generate_logs(output_type, output_target, eps, api_url):
     print(f"[*] Loading dataset statistics from {TESTING_CSV}...")

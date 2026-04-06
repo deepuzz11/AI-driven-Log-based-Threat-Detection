@@ -11,23 +11,26 @@ function PipelineTracker({ state, result }) {
     const getStepClass = (key) => {
         if (state === 'idle') return ''
         if (state === 'step1' && key === 'rule') return 'active'
-        if (state === 'step2' && key === 'rule') return 'pass'
         if (state === 'step2' && key === 'ml') return 'active'
-        if (state === 'rule-hit') {
+        if (state === 'rule-hit' || (result && result.rule_hits && result.rule_hits.length > 0)) {
             if (key === 'rule') return 'hit'
-            if (key === 'ml') return 'skip'
-            if (key === 'out') return 'hit'
+            if (state === 'rule-hit') {
+                if (key === 'ml') return 'skip'
+                if (key === 'out') return 'hit'
+            }
         }
+        
         if (state === 'ml-attack') {
-            if (key === 'rule') return 'pass'
             if (key === 'ml') return 'hit'
             if (key === 'out') return 'hit'
         }
         if (state === 'ml-benign') {
-            if (key === 'rule') return 'pass'
             if (key === 'ml') return 'pass'
             if (key === 'out') return 'pass'
         }
+        
+        // Pass remains for rule step if it wasn't a hit but state passed step 1
+        if (key === 'rule' && (state === 'step2' || state === 'ml-attack' || state === 'ml-benign')) return 'pass'
         return ''
     }
 
@@ -38,20 +41,23 @@ function PipelineTracker({ state, result }) {
             if (key === 'rule') return '✓ No match'
             if (key === 'ml') return '🔍 Classifying...'
         }
-        if (state === 'rule-hit') {
-            if (key === 'rule') return '✕ HIT'
-            if (key === 'ml') return '⏭ Skipped'
-            if (key === 'out') return '⚠ ATTACK'
+        if (state === 'rule-hit' || (result && result.rule_hits && result.rule_hits.length > 0)) {
+            if (key === 'rule') return '✕ ATTACK HIT'
+            if (state === 'rule-hit') {
+                if (key === 'ml') return '⏭ Skipped (Signature Match)'
+                if (key === 'out') return '🚨 ATTACK DETECTED'
+            }
         }
+        
         if (state === 'ml-attack') {
-            if (key === 'rule') return '✓ Clear'
-            if (key === 'ml') return '✕ ATTACK'
-            if (key === 'out') return '⚠ ATTACK'
+            if (key === 'ml') return '✕ ATTACK HIT'
+            if (key === 'out') return '🚨 ATTACK DETECTED'
+            if (key === 'rule') return '✓ No Signature match'
         }
         if (state === 'ml-benign') {
-            if (key === 'rule') return '✓ Clear'
             if (key === 'ml') return '✓ Benign'
             if (key === 'out') return '✓ BENIGN'
+            if (key === 'rule') return '✓ Clear'
         }
         return ''
     }

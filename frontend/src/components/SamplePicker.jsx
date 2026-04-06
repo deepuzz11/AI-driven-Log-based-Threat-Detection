@@ -11,19 +11,12 @@ function StatItem({ value, label, color }) {
   )
 }
 
-function SamplePicker({ stats, category, setCategory, rowIndex, setRowIndex,
+function SamplePicker({ stats, rowIndex, setRowIndex,
   pickRandom, pickByIndex, runAnalysis, loading, analyzing, sample }) {
   return (
     <div className="card">
       <div className="card-header"><FolderOpen size={16} className="icon" style={{ marginRight: 6 }} /> Sample Selection</div>
       <div className="card-body">
-        <div className="form-group">
-          <label className="form-label">Filter by Attack Category</label>
-          <select className="form-select" value={category} onChange={e => setCategory(e.target.value)}>
-            <option value="ALL">ALL</option>
-            {stats?.categories?.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
 
         <div className="btn-group" style={{ display: 'flex', gap: '12px' }}>
           <button className="btn btn-secondary" onClick={pickRandom} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexShrink: 0 }}>

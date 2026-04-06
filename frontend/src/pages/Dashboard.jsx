@@ -14,8 +14,9 @@ import RuleHitsPanel from '../components/RuleHitsPanel'
 import SequenceViewer from '../components/SequenceViewer'
 import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
+import ExecutiveSummary from '../components/ExecutiveSummary'
 
-const API = '/api'
+const API = '/api/sentinel'
 
 export default function Dashboard() {
     const [stats, setStats] = useState(null)
@@ -24,12 +25,8 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(false)
     const [analyzing, setAnalyzing] = useState(false)
     const [pipelineState, setPipelineState] = useState('idle')
-    const [category, setCategory] = useState('ALL')
     const [rowIndex, setRowIndex] = useState('')
-    const [activeTab, setActiveTab] = useState('overview')
     const [ruleForm, setRuleForm] = useState({ name: '', regex: '', category: '', severity: 'HIGH', remedy: '' })
-    const [correlationData, setCorrelationData] = useState(null)
-    const [correlationLoading, setCorrelationLoading] = useState(false)
 
     useEffect(() => {
         fetch(`${API}/stats`).then(r => r.json()).then(setStats).catch(console.error)
@@ -38,7 +35,7 @@ export default function Dashboard() {
     const pickRandom = useCallback(async () => {
         setLoading(true); setResult(null); setPipelineState('idle')
         try {
-            const r = await fetch(`${API}/sample/random?cat=${category}`)
+            const r = await fetch(`${API}/investigate/sample/random`)
             const data = await r.json()
             setSample(data); setRowIndex(String(data.index))
             toast.custom((t) => (
@@ -66,13 +63,13 @@ export default function Dashboard() {
             console.error(e)
         }
         setLoading(false)
-    }, [category])
+    }, [])
 
     const pickByIndex = useCallback(async () => {
         if (!rowIndex) return
         setLoading(true); setResult(null); setPipelineState('idle')
         try {
-            const r = await fetch(`${API}/sample/${rowIndex}`)
+            const r = await fetch(`${API}/investigate/sample/${rowIndex}`)
             if (!r.ok) throw new Error()
             const data = await r.json()
             setSample(data)
@@ -107,7 +104,6 @@ export default function Dashboard() {
         setAnalyzing(true); setResult(null)
         setPipelineState('step1')
 
-        // Remove the standard toast.promise, as we want custom loading components
         const toastId = toast.custom((t) => (
             <div className="custom-toast loading slide-down">
                 <div className="custom-toast-icon"><Loader2 size={18} className="spinner" /></div>
@@ -119,22 +115,20 @@ export default function Dashboard() {
         ), { duration: Infinity })
 
         try {
-            await new Promise(r => setTimeout(r, 500)) // brief visual delay for step1
-            const r = await fetch(`${API}/analyze`, {
+            const r = await fetch(`${API}/investigate/analyze`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ row: sample.row })
             })
             const data = await r.json()
+            setResult(data) // Inform the pipeline immediately
 
             if (data.method === 'rule-based') {
                 setPipelineState('rule-hit')
             } else {
                 setPipelineState('step2')
-                await new Promise(r => setTimeout(r, 400)) // brief visual delay for step2
+                await new Promise(r => setTimeout(r, 150)) // Fast visual snap
                 setPipelineState(data.decision === 'ATTACK' ? 'ml-attack' : 'ml-benign')
             }
-
-            setResult(data)
 
             // Pre-fill rule form for attacks
             if (data.decision === 'ATTACK') {
@@ -192,7 +186,7 @@ export default function Dashboard() {
 
     const addRule = useCallback(async () => {
         try {
-            const r = await fetch(`${API}/add-rule`, {
+            const r = await fetch(`${API}/rules/add`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(ruleForm)
             })
@@ -202,16 +196,17 @@ export default function Dashboard() {
                     <div className="custom-toast success slide-down">
                         <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
                         <div className="custom-toast-content">
-                            <div className="custom-toast-title">Rule Saved</div>
-                            <div className="custom-toast-message">"{ruleForm.name}" added to rules.txt</div>
+                            <div className="custom-toast-title">Rule Persisted</div>
+                            <div className="custom-toast-message">"{ruleForm.name}" permanently added to rules.txt. Rule engine reloaded.</div>
                         </div>
                         <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
                         <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
                     </div>
-                ), { duration: 3000 })
+                ), { duration: 4000 })
                 if (stats) setStats({ ...stats, rules_count: data.rules_count })
+            } else {
+                toast.error(`Rule name "${ruleForm.name}" already exists in rules.txt`)
             }
-            // Silent skip when rule already exists (data.added = false) - no toast shown
         } catch (e) {
             toast.custom((t) => (
                 <div className="custom-toast error slide-down">
@@ -226,75 +221,14 @@ export default function Dashboard() {
         }
     }, [ruleForm, stats])
 
-    const runCorrelationAnalysis = useCallback(async () => {
-        if (!sample) {
-            toast.error('Please load a sample first')
-            return
-        }
-
-        setCorrelationLoading(true)
-        setCorrelationData(null)
-
-        const toastId = toast.custom((t) => (
-            <div className="custom-toast loading slide-down">
-                <div className="custom-toast-icon"><Loader2 size={18} className="spinner" /></div>
-                <div className="custom-toast-content">
-                    <div className="custom-toast-title">Analyzing Sequence</div>
-                    <div className="custom-toast-message">Correlating logs across sequence...</div>
-                </div>
-            </div>
-        ), { duration: Infinity })
-
-        try {
-            const correlationIndex = Math.max(0, parseInt(rowIndex) - 5)
-            const response = await fetch(
-                `${API}/correlate-sequence/${correlationIndex}?seq_len=10`,
-                { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-            )
-
-            if (!response.ok) {
-                throw new Error('Analysis failed')
-            }
-
-            const data = await response.json()
-            setCorrelationData(data)
-
-            toast.custom((t) => (
-                <div className="custom-toast success slide-down">
-                    <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Sequence Analyzed</div>
-                        <div className="custom-toast-message">
-                            {data.explainability.threat_level} - {data.explainability.attack_count} attacks detected
-                        </div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                </div>
-            ), { duration: 3000, id: toastId })
-        } catch (e) {
-            toast.custom((t) => (
-                <div className="custom-toast error slide-down">
-                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Correlation Failed</div>
-                        <div className="custom-toast-message">Could not analyze sequence</div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                </div>
-            ), { id: toastId })
-        } finally {
-            setCorrelationLoading(false)
-        }
-    }, [sample, rowIndex])
 
     return (
-        <div className="main-layout layout-pro">
+        <div className="main-layout layout-pro dashboard-page">
 
-            {/* ── LEFT PANEL ── */}
+            {/* ── LEFT INVESTIGATION PANEL ── */}
             <div className="side-panel fade-in-scale stagger-1">
                 <SamplePicker
-                    stats={stats} category={category} setCategory={setCategory}
+                    stats={stats}
                     rowIndex={rowIndex} setRowIndex={setRowIndex}
                     pickRandom={pickRandom} pickByIndex={pickByIndex}
                     runAnalysis={runAnalysis} loading={loading} analyzing={analyzing}
@@ -303,143 +237,64 @@ export default function Dashboard() {
                 <LogViewer sample={sample} />
             </div>
 
-            {/* ── CENTER PANEL ── */}
+            {/* ── PRIMARY DISCOVERY CONSOLE ── */}
             <div className="center-panel fade-in-scale stagger-2">
                 <PipelineTracker state={pipelineState} result={result} />
 
                 {result ? (
-                    <div className="slide-up stagger-3" style={{ marginTop: 24 }}>
-                        {/* ── TABS NAVIGATION ── */}
-                        <div className="tab-list">
-                            <button
-                                className={`tab-item ${activeTab === 'overview' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('overview')}
-                            >
-                                Overview
-                            </button>
-                            <button
-                                className={`tab-item ${activeTab === 'deepdive' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('deepdive')}
-                            >
-                                Deep Dive
-                            </button>
-                            <button
-                                className={`tab-item ${activeTab === 'correlation' ? 'active' : ''}`}
-                                onClick={() => {
-                                    setActiveTab('correlation')
-                                    if (!correlationData && !correlationLoading) {
-                                        runCorrelationAnalysis()
-                                    }
-                                }}
-                            >
-                                Sequence Correlation
-                            </button>
-                            {result.decision === 'ATTACK' && (
-                                <button
-                                    className={`tab-item ${activeTab === 'rules' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('rules')}
-                                >
-                                    Rule Tuning
-                                </button>
-                            )}
+                    <div className="analysis-report slide-up stagger-3" style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        
+                        {/* ── TIER 1: VERDICT & FORENSIC CONSTRAINTS ── */}
+                        <div className="results-grid fade-in-scale">
+                            <VerdictCard result={result} />
+                            <ClusterCard result={result} />
                         </div>
 
-                        {/* ── TABS CONTENT ── */}
-                        <div className="tab-content">
-                            {activeTab === 'overview' && (
-                                <div className="results-grid fade-in-scale">
-                                    <VerdictCard result={result} />
-                                    <ClusterCard result={result} />
-                                    {result.rule_hits && result.rule_hits.length > 0 && (
-                                        <div style={{ gridColumn: '1 / -1' }}>
-                                            <RuleHitsPanel ruleHits={result.rule_hits} />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                        {/* ── TIER 2: EXECUTIVE INTELLIGENCE ── */}
+                        <div className="fade-in-scale">
+                            <ExecutiveSummary result={result} />
+                        </div>
 
-                            {activeTab === 'deepdive' && (
-                                <div className="results-grid fade-in-scale">
-                                    <ExplainPanel result={result} />
-                                    <SuggestPanel result={result} />
-                                </div>
-                            )}
+                        {/* ── TIER 3: TECHNICAL EXPLAINABILITY ── */}
+                        <div className="results-grid fade-in-scale">
+                            <ExplainPanel result={result} />
+                            <SuggestPanel result={result} />
+                        </div>
 
-                            {activeTab === 'correlation' && (
-                                <div className="fade-in-scale">
-                                    {correlationLoading ? (
-                                        <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
-                                            <Loader2 size={24} className="spinner" style={{ margin: '0 auto 12px' }} />
-                                            <p style={{ color: 'var(--text-secondary)' }}>Analyzing sequence correlations...</p>
-                                        </div>
-                                    ) : correlationData ? (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                            <CorrelationInsights
-                                                explainability={correlationData.explainability}
-                                                correlationStats={correlationData.correlation_stats}
-                                                ruleHits={correlationData.all_rule_hits}
-                                            />
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                                <SequenceExplainability
-                                                    explainability={correlationData.explainability}
-                                                    correlationStats={correlationData.correlation_stats}
-                                                />
-                                                <SequenceViewer
-                                                    sequenceLogs={correlationData.sequence_logs}
-                                                    explainability={correlationData.explainability}
-                                                />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
-                                            <p style={{ color: 'var(--text-secondary)' }}>Click to analyze sequence correlations around this log</p>
-                                            <button
-                                                onClick={runCorrelationAnalysis}
-                                                disabled={correlationLoading}
-                                                style={{
-                                                    marginTop: '12px',
-                                                    padding: '8px 16px',
-                                                    background: 'var(--accent-blue)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer',
-                                                    fontWeight: 600
-                                                }}
-                                            >
-                                                Analyze Sequence
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                        {/* ── TIER 4: SIGNATURE MATCHING (IF ANY) ── */}
+                        {result.rule_hits && result.rule_hits.length > 0 && (
+                            <div className="fade-in-scale">
+                                <RuleHitsPanel ruleHits={result.rule_hits} />
+                            </div>
+                        )}
 
-                            {activeTab === 'rules' && result.decision === 'ATTACK' && (
-                                <div className="fade-in-scale">
-                                    {result.rule_hits && result.rule_hits.length > 0 && (
-                                        <div style={{ marginBottom: '24px' }}>
-                                            <RuleHitsPanel ruleHits={result.rule_hits} />
-                                        </div>
-                                    )}
-                                    <RuleAddPanel
-                                        ruleForm={ruleForm} setRuleForm={setRuleForm}
-                                        addRule={addRule} ruleMsg={null}
-                                    />
-                                </div>
-                            )}
+                        {/* ── TIER 5: ADAPTIVE HARDENING ── */}
+                        <div className="fade-in-scale">
+                            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '24px', marginTop: '8px' }}>
+                                <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    <Shield size={18} color="var(--accent-blue)" />
+                                    Security Policy Hardening
+                                </h3>
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', marginTop: '-8px' }}> 
+                                    Update local signatures to permanently block similar traffic patterns across the cluster.
+                                </p>
+                                <RuleAddPanel
+                                    ruleForm={ruleForm} setRuleForm={setRuleForm}
+                                    addRule={addRule} ruleMsg={null}
+                                />
+                            </div>
                         </div>
                     </div>
                 ) : (
-                    <div className="card glass-panel slide-up stagger-3" style={{ padding: '64px 32px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px', opacity: 0.5 }}>📊</div>
-                        <h2 className="text-gradient" style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Awaiting Data</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '300px', margin: '0 auto' }}>
-                            Select a sample from the left panel and run the hybrid analysis to see the detection pipeline in action.
+                    <div className="card glass-panel slide-up stagger-3" style={{ padding: '80px 32px', textAlign: 'center', border: '1px solid var(--glass-border)' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '24px', opacity: 0.2 }}>🔍</div>
+                        <h2 className="text-gradient" style={{ fontSize: '22px', fontWeight: 700, marginBottom: '12px' }}>Awaiting Forensic Data</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '340px', margin: '0 auto', lineHeight: 1.6 }}>
+                            Initiate the hybrid analysis pipeline by selecting a log sample from the source manifest on the left.
                         </p>
                     </div>
                 )}
             </div>
-
         </div>
     )
 }

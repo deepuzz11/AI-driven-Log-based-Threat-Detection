@@ -136,7 +136,7 @@ export default function LiveTraffic() {
     }, [])
 
     return (
-        <div className="live-traffic-page" style={{
+        <div className="live-traffic-page live-monitor-page" style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '24px',
@@ -276,17 +276,16 @@ export default function LiveTraffic() {
                         color: 'var(--text-secondary)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 10,
-                        backdropFilter: 'blur(10px)'
+                        background: 'rgba(255,255,255,0.06)',
+                        borderBottom: '1px solid var(--border)'
                     }}>
                         <span>Event #</span>
                         <span>Verdict</span>
                         <span>Protocol</span>
                         <span>Service</span>
                         <span>Detection</span>
-                        <span>Details / Attack Type</span>
+                        <span>Raw Industrial Log Event</span>
+
                     </div>
 
                     {/* Log List */}
@@ -358,29 +357,25 @@ export default function LiveTraffic() {
 
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
                                         <div className="payload-box" style={{
-                                            padding: '4px 12px',
-                                            background: log.decision === 'ATTACK' 
-                                                ? 'rgba(239, 68, 68, 0.12)' 
-                                                : 'rgba(255,255,255,0.03)',
+                                            padding: '6px 14px',
+                                            background: 'rgba(0,0,0,0.3)',
                                             borderRadius: '6px',
                                             fontSize: '11px',
-                                            color: log.decision === 'ATTACK' 
-                                                ? 'var(--accent-red)' 
-                                                : 'var(--text-secondary)',
-                                            fontWeight: log.decision === 'ATTACK' ? 600 : 400,
+                                            color: log.decision === 'ATTACK' ? 'var(--accent-red)' : 'var(--accent-cyan)',
+                                            fontFamily: '"JetBrains Mono", monospace',
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            border: `1px solid ${log.decision === 'ATTACK' 
-                                                ? 'rgba(239, 68, 68, 0.3)' 
-                                                : 'transparent'}`,
-                                            flex: 1
-                                        }}>
-                                            {log.decision === 'ATTACK' 
-                                                ? `${log.prediction} (${log.confidence?.toFixed(0) || 100}%)` 
-                                                : `Benign (${log.confidence?.toFixed(0) || 99}% safe)`}
+                                            border: `1px solid ${log.decision === 'ATTACK' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(6, 182, 212, 0.2)'}`,
+                                            flex: 1,
+                                            letterSpacing: '0.02em',
+                                            boxShadow: 'inset 0 0 10px rgba(0,0,0,0.2)'
+                                        }} title={log.raw_log}>
+                                            <span style={{ opacity: 0.5, marginRight: '8px' }}>[RAW]</span>
+                                            {log.raw_log || 'N/A'}
                                         </div>
                                     </div>
+
                                 </div>
                             ))
                         )}

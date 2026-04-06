@@ -6,7 +6,7 @@ import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
 import '../styles/RealtimeCorrelation.css'
 
-const API = '/api'
+const API = '/api/sentinel/realtime'
 
 export default function RealtimeCorrelation() {
     const [isRunning, setIsRunning] = useState(false)
@@ -24,7 +24,7 @@ export default function RealtimeCorrelation() {
     const startRealtimeGeneration = useCallback(async () => {
         try {
             const eps = parseInt(eventRate) || 5
-            await fetch(`${API}/realtime/start?eps=${eps}`, { method: 'POST' })
+            await fetch(`${API}/start?eps=${eps}`, { method: 'POST' })
             setIsRunning(true)
             logCounterRef.current = 0
             setRecentLogs([])
@@ -81,7 +81,7 @@ export default function RealtimeCorrelation() {
     // Stop real-time generation
     const stopRealtimeGeneration = useCallback(async () => {
         try {
-            await fetch(`${API}/realtime/stop`, { method: 'POST' })
+            await fetch(`${API}/stop`, { method: 'POST' })
             if (eventSourceRef.current) {
                 eventSourceRef.current.close()
             }
@@ -165,21 +165,21 @@ export default function RealtimeCorrelation() {
     }, [])
 
     return (
-        <div className="page realtime-correlation-page">
-            <div className="page-header">
+        <div className="page realtime-correlation-page realtime-page">
+            <div className="page-header" style={{ padding: '0 0 24px 0', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
                 <div className="page-title-section">
                     <Zap size={28} className="page-icon active" />
                     <div>
-                        <h1>Real-Time Correlation & Auto-Learning</h1>
-                        <p>Generate live logs, detect threats, and automatically learn new rules</p>
+                        <h1 style={{ margin: 0, fontSize: '24px' }}>Real-Time Correlation & Auto-Learning</h1>
+                        <p style={{ margin: 0, opacity: 0.7, fontSize: '13px' }}>Generate live logs, detect threats, and automatically learn new rules</p>
                     </div>
                 </div>
             </div>
 
             <div className="page-content">
                 {/* Control Panel */}
-                <div className="card control-panel">
-                    <div className="card-header">Real-Time Configuration</div>
+                <div className="card control-panel" style={{ marginBottom: '24px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
+                    <div className="card-header" style={{ background: 'var(--bg-surface)', padding: '12px 20px' }}>Real-Time Configuration</div>
                     <div className="card-body">
                         <div className="control-grid">
                             <div className="control-group">

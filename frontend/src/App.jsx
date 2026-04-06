@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Shield, Home, BarChart3, Activity, FileText, Blocks, Settings, Sun, Moon, Menu, X, ChevronLeft, ChevronRight, Zap } from 'lucide-react'
+import { Shield, Home, BarChart3, Activity, FileText, Blocks, Settings, Sun, Moon, Menu, X, ChevronLeft, ChevronRight, Zap, LayoutDashboard, TrendingUp, Share2, Waypoints, Eye, FileSearch, ShieldAlert, Cloud } from 'lucide-react'
 import './index.css'
 
 function App() {
@@ -38,16 +38,16 @@ function App() {
   // Update header text based on active route
   const getPageTitle = () => {
     switch (location.pathname) {
-      case '/': return 'Global Overview'
-      case '/analytics': return 'Threat Analytics'
-      case '/correlation': return 'Log Correlation'
-      case '/realtime': return 'Real-Time Correlation'
-      case '/reports': return 'Incident Reports'
-      case '/rules': return 'Rule Management'
-      case '/integrations': return 'System Integrations'
-      case '/settings': return 'Platform Settings'
-      case '/live': return 'Live Monitoring'
-      default: return 'Dashboard'
+      case '/': return 'SOC Dashboard'
+      case '/analytics': return 'Security Insights'
+      case '/correlation': return 'Threat Correlation'
+      case '/realtime': return 'Behavioral Ops'
+      case '/reports': return 'Incident Forensics'
+      case '/rules': return 'Detection Rules'
+      case '/integrations': return 'Cloud Connectors'
+      case '/settings': return 'System Settings'
+      case '/live': return 'Real-Time Traffic'
+      default: return 'ThreatEngine Dashboard'
     }
   }
 
@@ -93,55 +93,55 @@ function App() {
 
         {/* ── SIDEBAR ───────────────────────────────────────── */}
         <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
-          <div className="sidebar-header">
-            <span className="sidebar-logo">
-              <Shield size={20} className="text-primary" />
-              <span>ThreatEngine OS</span>
+          <div className="sidebar-header" style={{ height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
+            <span className="sidebar-logo" style={{ fontSize: '20px', gap: '10px', display: 'flex', alignItems: 'center' }}>
+              <Shield size={28} className="text-accent-blue" strokeWidth={2.5} style={{ color: 'var(--accent-blue)' }} />
+              <span style={{ letterSpacing: '-0.02em', fontWeight: 800 }}>ThreatEngine Sentinel</span>
             </span>
+            <button
+              className="sidebar-toggle-btn"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{ margin: 0, padding: '4px', background: 'transparent', border: 'none' }}
+              title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
           </div>
           <nav className="sidebar-nav">
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', margin: '12px 12px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Core</div>
-            <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} title="Overview">
-              <Home size={18} /> <span>Overview</span>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', margin: '12px 12px 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Core</div>
+            <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} title="SOC Dashboard">
+              <LayoutDashboard size={20} /> <span>SOC Dashboard</span>
             </Link>
-            <Link to="/analytics" className={`nav-item ${location.pathname === '/analytics' ? 'active' : ''}`} title="Analytics">
-              <BarChart3 size={18} /> <span>Analytics</span>
+            <Link to="/analytics" className={`nav-item ${location.pathname === '/analytics' ? 'active' : ''}`} title="Security Insights">
+              <TrendingUp size={20} /> <span>Security Insights</span>
             </Link>
-            <Link to="/correlation" className={`nav-item ${location.pathname === '/correlation' ? 'active' : ''}`} title="Log Correlation">
-              <Zap size={18} /> <span>Log Correlation</span>
+            <Link to="/correlation" className={`nav-item ${location.pathname === '/correlation' ? 'active' : ''}`} title="Threat Correlation">
+              <Share2 size={20} /> <span>Threat Correlation</span>
             </Link>
-            <Link to="/realtime" className={`nav-item ${location.pathname === '/realtime' ? 'active' : ''}`} title="Real-Time Correlation">
-              <Activity size={18} /> <span>Real-Time Correlation</span>
+            <Link to="/realtime" className={`nav-item ${location.pathname === '/realtime' ? 'active' : ''}`} title="Behavioral Ops">
+              <Waypoints size={20} /> <span>Behavioral Ops</span>
             </Link>
-            <Link to="/live" className={`nav-item ${location.pathname === '/live' ? 'active' : ''}`} title="Live Traffic">
-              <Activity size={18} /> <span>Live Traffic</span>
+            <Link to="/live" className={`nav-item ${location.pathname === '/live' ? 'active' : ''}`} title="Real-Time Traffic">
+              <Eye size={20} /> <span>Real-Time Traffic</span>
             </Link>
 
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', margin: '20px 12px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Operations</div>
-            <Link to="/reports" className={`nav-item ${location.pathname === '/reports' ? 'active' : ''}`} title="Incident Reports">
-              <FileText size={18} /> <span>Incident Reports</span>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', margin: '24px 12px 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Operations</div>
+            <Link to="/reports" className={`nav-item ${location.pathname === '/reports' ? 'active' : ''}`} title="Incident Forensics">
+              <FileSearch size={20} /> <span>Incident Forensics</span>
             </Link>
-            <Link to="/rules" className={`nav-item ${location.pathname === '/rules' ? 'active' : ''}`} title="Rule Management">
-              <Zap size={18} /> <span>Rule Management</span>
+            <Link to="/rules" className={`nav-item ${location.pathname === '/rules' ? 'active' : ''}`} title="Detection Rules">
+              <ShieldAlert size={20} /> <span>Detection Rules</span>
             </Link>
-            <Link to="/integrations" className={`nav-item ${location.pathname === '/integrations' ? 'active' : ''}`} title="Integrations">
-              <Blocks size={18} /> <span>Integrations</span>
+            <Link to="/integrations" className={`nav-item ${location.pathname === '/integrations' ? 'active' : ''}`} title="Cloud Connectors">
+              <Cloud size={20} /> <span>Cloud Connectors</span>
             </Link>
 
             <div style={{ marginTop: 'auto' }}></div>
-            <Link to="/settings" className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`} title="Settings">
-              <Settings size={18} /> <span>Settings</span>
+            <Link to="/settings" className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`} title="System Settings">
+              <Settings size={20} /> <span>System Settings</span>
             </Link>
           </nav>
 
-          {/* Collapse Toggle */}
-          <button
-            className="sidebar-toggle-btn"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
         </aside>
 
         {/* ── MAIN CONTENT ──────────────────────────────────── */}
@@ -154,9 +154,11 @@ function App() {
                 {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
               <div className="header-breadcrumbs">
+                <span>Infrastructure</span>
+                <ChevronRight size={10} style={{ opacity: 0.3 }} />
                 <span>Security</span>
-                <span>/</span>
-                <span className="breadcrumb-active">{getPageTitle()}</span>
+                <ChevronRight size={10} style={{ opacity: 0.3 }} />
+                <span style={{ color: 'var(--accent-cyan)' }}>{getPageTitle()}</span>
               </div>
             </div>
             <div className="header-actions">

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
-import { FileText, Search, Trash2, Plus, AlertTriangle, CheckCircle, Loader2, Filter } from 'lucide-react'
+import { FileText, Search, Trash2, Plus, CheckCircle, Loader2, Filter } from 'lucide-react'
 
-const API = '/api'
+const API = '/api/sentinel'
 
 export default function Rules() {
-    const [stats, setStats] = useState(null)
     const [rules, setRules] = useState([])
     const [filteredRules, setFilteredRules] = useState([])
     const [loading, setLoading] = useState(true)
@@ -20,7 +19,6 @@ export default function Rules() {
     })
 
     useEffect(() => {
-        loadStats()
         loadRules()
     }, [])
 
@@ -28,69 +26,54 @@ export default function Rules() {
         filterRules()
     }, [rules, searchTerm, categoryFilter])
 
-    const loadStats = async () => {
-        try {
-            const r = await fetch(`${API}/stats`)
-            const data = await r.json()
-            setStats(data)
-        } catch (e) {
-            console.error(e)
-        }
-    }
-
     const loadRules = async () => {
         setLoading(true)
         try {
             const r = await fetch(`${API}/rules`)
             const data = await r.json()
-            setRules(data.rules || [])
-            
-            // Extract unique categories
-            const cats = ['ALL', ...new Set(data.rules.map(r => r.category))]
+            const rulesData = data.rules || []
+            setRules(rulesData)
+            const cats = ['ALL', ...new Set(rulesData.map(r => r.category || 'unknown'))]
             setCategories(cats.sort())
         } catch (e) {
-            console.error(e)
             toast.error('Failed to load rules')
+            setRules([])
         } finally {
             setLoading(false)
         }
     }
 
     const filterRules = () => {
-        let filtered = rules
-        
-        if (categoryFilter !== 'ALL') {
-            filtered = filtered.filter(r => r.category.toLowerCase() === categoryFilter.toLowerCase())
+        if (!Array.isArray(rules)) return
+        let filtered = [...rules]
+        if (categoryFilter && categoryFilter !== 'ALL') {
+            filtered = filtered.filter(r => (r.category || '').toLowerCase() === categoryFilter.toLowerCase())
         }
-        
         if (searchTerm) {
             const search = searchTerm.toLowerCase()
             filtered = filtered.filter(r =>
-                r.name.toLowerCase().includes(search) ||
-                r.pattern.toLowerCase().includes(search) ||
-                r.category.toLowerCase().includes(search)
+                (r.name || '').toLowerCase().includes(search) ||
+                (r.pattern || '').toLowerCase().includes(search) ||
+                (r.category || '').toLowerCase().includes(search)
             )
         }
-        
         setFilteredRules(filtered)
     }
 
     const addRule = async () => {
-        if (!newRuleForm.name || !newRuleForm.regex) {
-            toast.error('Name and Regex are required')
+        if (!newRuleForm.name || !newRuleForm.regex || !newRuleForm.category) {
+            toast.error('Please fill in all fields')
             return
         }
-
         try {
-            const r = await fetch(`${API}/add-rule`, {
+            const r = await fetch(`${API}/rules/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newRuleForm)
             })
             const data = await r.json()
-
             if (data.added) {
-                toast.success(`Rule "${newRuleForm.name}" added successfully`)
+                toast.success('Rule added successfully')
                 setNewRuleForm({
                     name: '',
                     regex: '',
@@ -103,24 +86,14 @@ export default function Rules() {
             }
         } catch (e) {
             toast.error('Failed to add rule')
-            console.error(e)
         }
     }
 
     const getCategoryColor = (category) => {
         const colors = {
-            'dos': '#FF6B6B',
-            'recon': '#4ECDC4',
-            'backdoor': '#FF4757',
-            'exploits': '#FFE66D',
-            'fuzzers': '#95E1D3',
-            'shellcode': '#F38181',
-            'worms': '#AA96DA',
-            'analysis': '#FCBAD3',
-            'generic': '#A8D8EA',
-            'intrusion': '#FF6348',
-            'anomaly': '#FFA502',
-            'auth': '#C44569'
+            'dos': '#FF6B6B', 'recon': '#4ECDC4', 'backdoor': '#FF4757', 'exploits': '#FFE66D',
+            'fuzzers': '#95E1D3', 'shellcode': '#F38181', 'worms': '#AA96DA', 'analysis': '#FCBAD3',
+            'generic': '#A8D8EA', 'intrusion': '#FF6348', 'anomaly': '#FFA502', 'auth': '#C44569'
         }
         return colors[category?.toLowerCase()] || '#A0A0A0'
     }
@@ -136,212 +109,110 @@ export default function Rules() {
     }
 
     return (
-        <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
-            {/* Header */}
-            <div style={{ marginBottom: '32px' }}>
+        <div className="rules-page" style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
+            <div className="rules-header" style={{ padding: '0 0 24px 0', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                     <FileText size={32} color="var(--accent-blue)" />
                     <h1 style={{ fontSize: '28px', fontWeight: 700, margin: 0 }}>Detection Rules</h1>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.8 }}>
                     Manage pattern-based detection rules for the hybrid threat detection system
                 </p>
             </div>
 
-            {/* Stats Row */}
-            {stats && (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                    gap: '16px',
-                    marginBottom: '32px'
-                }}>
-                    <div style={{
-                        background: 'rgba(63,185,80,0.1)',
-                        border: '1px solid rgba(63,185,80,0.2)',
-                        borderRadius: '8px',
-                        padding: '16px'
-                    }}>
-                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 500 }}>
-                            Total Rules
+            <div className="stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+                <div className="card glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--accent-blue)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <div className="input-label">Active Signatures</div>
+                            <div style={{ fontSize: '32px', fontWeight: 800, color: '#fff' }}>{rules.length}</div>
                         </div>
-                        <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--accent-green)' }}>
-                            {rules.length}
+                        <FileText size={40} opacity={0.15} />
+                    </div>
+                </div>
+                <div className="card glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--accent-purple)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <div className="input-label">Categories</div>
+                            <div style={{ fontSize: '32px', fontWeight: 800, color: '#fff' }}>{Math.max(0, categories.length - 1)}</div>
+                        </div>
+                        <Filter size={40} opacity={0.15} />
+                    </div>
+                </div>
+                <div className="card glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--accent-green)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <div className="input-label">System Status</div>
+                            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                <div style={{ background: 'var(--accent-green)', boxShadow: '0 0 10px var(--accent-green)', width: 8, height: 8, borderRadius: '50%' }} />
+                                LIVE PROTECTED
+                            </div>
+                        </div>
+                        <CheckCircle size={40} opacity={0.15} />
+                    </div>
+                </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px', marginBottom: '40px', alignItems: 'start' }}>
+                <div className="card glass-panel" style={{ padding: '28px', border: '1px solid var(--border-bright)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                        <div style={{ background: 'var(--accent-blue)', padding: '8px', borderRadius: '8px' }}><Plus size={20} color="white" /></div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Forge New Signature</h2>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                            <label className="input-label">Signature Identifier</label>
+                            <input className="input-pro" type="text" placeholder="e.g. brute_force_attempt" value={newRuleForm.name} onChange={(e) => setNewRuleForm({ ...newRuleForm, name: e.target.value })} />
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                            <label className="input-label">Regex Pattern</label>
+                            <input className="input-pro" type="text" placeholder="e.g. \\b(admin|root)\\b" value={newRuleForm.regex} onChange={(e) => setNewRuleForm({ ...newRuleForm, regex: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="input-label">Category</label>
+                            <select className="input-pro" value={newRuleForm.category} onChange={(e) => setNewRuleForm({ ...newRuleForm, category: e.target.value })}>
+                                <option value="generic">Generic</option>
+                                <option value="dos">DoS/DDoS</option>
+                                <option value="recon">Reconnaissance</option>
+                                <option value="backdoor">Backdoor</option>
+                                <option value="exploits">Exploits</option>
+                                <option value="fuzzers">Fuzzers</option>
+                                <option value="worms">Worms</option>
+                                <option value="analysis">Analysis</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="input-label">Severity</label>
+                            <select className="input-pro" value={newRuleForm.severity} onChange={(e) => setNewRuleForm({ ...newRuleForm, severity: e.target.value })}>
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
+                            </select>
+                        </div>
+                        <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
+                            <button className="btn-neo btn-neo-primary" onClick={addRule} style={{ width: '100%', justifyContent: 'center', height: '48px' }}>
+                                <Plus size={18} /> INITIALIZE RULE
+                            </button>
                         </div>
                     </div>
                 </div>
-            )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
-                {/* Add Rule Form */}
-                <div style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '24px'
-                }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>➕ Add New Rule</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div>
-                            <label style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px', display: 'block' }}>
-                                Rule Name
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="e.g., sql_injection_attempt"
-                                value={newRuleForm.name}
-                                onChange={(e) => setNewRuleForm({ ...newRuleForm, name: e.target.value })}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '6px',
-                                    background: 'var(--bg-primary)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '13px',
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <label style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px', display: 'block' }}>
-                                Regex Pattern
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="e.g., \\b(sql|injection)\\b"
-                                value={newRuleForm.regex}
-                                onChange={(e) => setNewRuleForm({ ...newRuleForm, regex: e.target.value })}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '6px',
-                                    background: 'var(--bg-primary)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '13px',
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <div>
-                                <label style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px', display: 'block' }}>
-                                    Category
-                                </label>
-                                <select
-                                    value={newRuleForm.category}
-                                    onChange={(e) => setNewRuleForm({ ...newRuleForm, category: e.target.value })}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '6px',
-                                        background: 'var(--bg-primary)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '13px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                >
-                                    <option value="generic">Generic</option>
-                                    <option value="dos">DoS/DDoS</option>
-                                    <option value="recon">Reconnaissance</option>
-                                    <option value="backdoor">Backdoor</option>
-                                    <option value="exploits">Exploits</option>
-                                    <option value="fuzzers">Fuzzers</option>
-                                    <option value="worms">Worms</option>
-                                    <option value="analysis">Analysis</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px', display: 'block' }}>
-                                    Severity
-                                </label>
-                                <select
-                                    value={newRuleForm.severity}
-                                    onChange={(e) => setNewRuleForm({ ...newRuleForm, severity: e.target.value })}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '6px',
-                                        background: 'var(--bg-primary)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '13px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                >
-                                    <option value="LOW">Low</option>
-                                    <option value="MEDIUM">Medium</option>
-                                    <option value="HIGH">High</option>
-                                    <option value="CRITICAL">Critical</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button
-                            onClick={addRule}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'var(--accent-blue)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: '14px',
-                                marginTop: '8px'
-                            }}
-                        >
-                            <Plus size={16} style={{ marginRight: '4px', display: 'inline' }} />
-                            Add Rule
-                        </button>
+                <div className="card glass-panel" style={{ padding: '28px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                        <div style={{ background: 'var(--accent-purple)', padding: '8px', borderRadius: '8px' }}><Filter size={20} color="white" /></div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Distribution</h2>
                     </div>
-                </div>
-
-                {/* Rules Summary */}
-                <div style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '24px'
-                }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>📊 Rules by Category</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '380px', overflowY: 'auto' }}>
                         {categories.filter(c => c !== 'ALL').map(cat => {
-                            const count = rules.filter(r => r.category.toLowerCase() === cat.toLowerCase()).length
+                            const count = rules.filter(r => (r.category || '').toLowerCase() === cat.toLowerCase()).length
                             return (
-                                <div key={cat} style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '8px 0',
-                                    borderBottom: '1px solid var(--border-color)'
-                                }}>
-                                    <span style={{ 
-                                        fontSize: '13px',
-                                        fontWeight: 500,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px'
-                                    }}>
-                                        <span style={{
-                                            width: '8px',
-                                            height: '8px',
-                                            borderRadius: '50%',
-                                            background: getCategoryColor(cat)
-                                        }} />
-                                        {cat}
-                                    </span>
-                                    <span style={{
-                                        fontSize: '12px',
-                                        fontWeight: 600,
-                                        background: 'rgba(100,100,100,0.2)',
-                                        padding: '2px 8px',
-                                        borderRadius: '4px'
-                                    }}>
-                                        {count}
-                                    </span>
+                                <div key={cat} onClick={() => setCategoryFilter(cat)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', cursor: 'pointer', border: categoryFilter === cat ? '1px solid var(--accent-purple)' : '1px solid transparent' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: getCategoryColor(cat) }} />
+                                        <span style={{ fontSize: '13px', fontWeight: 600, textTransform: 'capitalize' }}>{cat}</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: '20px' }}>{count}</div>
                                 </div>
                             )
                         })}
@@ -349,156 +220,46 @@ export default function Rules() {
                 </div>
             </div>
 
-            {/* Search and Filter */}
-            <div style={{
-                display: 'flex',
-                gap: '16px',
-                marginBottom: '20px',
-                alignItems: 'center'
-            }}>
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <Search size={16} style={{
-                        position: 'absolute',
-                        left: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'var(--text-secondary)'
-                    }} />
-                    <input
-                        type="text"
-                        placeholder="Search rules..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '10px 12px 10px 40px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
-                            background: 'var(--bg-secondary)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                        }}
-                    />
-                </div>
-                <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    style={{
-                        padding: '10px 12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '6px',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '13px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Rules Table */}
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', margin: '0 auto' }} />
-                </div>
-            ) : filteredRules.length === 0 ? (
-                <div style={{
-                    textAlign: 'center',
-                    padding: '40px',
-                    color: 'var(--text-secondary)',
-                    background: 'var(--bg-secondary)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-color)'
-                }}>
-                    <p>No rules found. Create the first rule to get started!</p>
-                </div>
-            ) : (
-                <div style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1.5fr 2fr 1.2fr 1.2fr 1fr',
-                        padding: '12px 16px',
-                        borderBottom: '1px solid var(--border-color)',
-                        background: 'rgba(255,255,255,0.03)',
-                        fontWeight: 600,
-                        fontSize: '12px',
-                        textTransform: 'uppercase',
-                        color: 'var(--text-secondary)'
-                    }}>
-                        <div>Name</div>
-                        <div>Pattern</div>
-                        <div>Category</div>
-                        <div>Severity</div>
-                        <div>Count</div>
+            <div className="card glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+                <div style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    <div style={{ flex: 1, position: 'relative' }}>
+                        <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                        <input className="input-pro" style={{ paddingLeft: '44px', background: 'rgba(0,0,0,0.3)' }} type="text" placeholder="Search signatures..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    {filteredRules.map((rule, idx) => (
-                        <div key={idx} style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1.5fr 2fr 1.2fr 1.2fr 1fr',
-                            padding: '12px 16px',
-                            borderBottom: idx < filteredRules.length - 1 ? '1px solid var(--border-color)' : 'none',
-                            alignItems: 'center',
-                            fontSize: '13px'
-                        }}>
-                            <div style={{ fontWeight: 500 }}>{rule.name}</div>
-                            <div style={{
-                                fontFamily: 'monospace',
-                                fontSize: '11px',
-                                color: 'var(--text-secondary)',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                            }} title={rule.pattern}>
-                                {rule.pattern}
-                            </div>
-                            <div style={{
-                                display: 'inline-block',
-                                background: `${getCategoryColor(rule.category)}22`,
-                                border: `1px solid ${getCategoryColor(rule.category)}`,
-                                color: getCategoryColor(rule.category),
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                textTransform: 'capitalize',
-                                width: 'fit-content'
-                            }}>
-                                {rule.category}
-                            </div>
+                    <select className="input-pro" style={{ width: '160px', background: 'rgba(0,0,0,0.3)' }} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                        {categories.map(cat => <option key={cat} value={cat}>{cat.toUpperCase()}</option>)}
+                    </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 1.2fr 1fr 80px', padding: '16px 24px', background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid var(--border)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                    <div>Identifier</div>
+                    <div>Pattern</div>
+                    <div>Category</div>
+                    <div>Severity</div>
+                    <div style={{ textAlign: 'right' }}>Ops</div>
+                </div>
+
+                <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px' }}><Loader2 size={32} className="spin" style={{ margin: '0 auto' }} /></div>
+                    ) : filteredRules.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>No signatures found matching your criteria.</div>
+                    ) : filteredRules.map((rule, idx) => (
+                        <div key={idx} className="rule-row" style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 1.2fr 1fr 80px', padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.03)', alignItems: 'center', fontSize: '13px' }}>
+                            <div style={{ fontWeight: 600, color: '#fff' }}>{rule.name}</div>
+                            <div className="pattern-code" title={rule.pattern}>{rule.pattern}</div>
+                            <div><span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', background: `${getCategoryColor(rule.category)}15`, color: getCategoryColor(rule.category), border: `1px solid ${getCategoryColor(rule.category)}33` }}>{rule.category}</span></div>
                             <div>
                                 {(() => {
-                                    const badge = getSeverityBadge(rule.severity)
-                                    return (
-                                        <span style={{
-                                            background: badge.bg,
-                                            border: `1px solid ${badge.border}`,
-                                            color: badge.text,
-                                            padding: '4px 8px',
-                                            borderRadius: '4px',
-                                            fontSize: '11px',
-                                            fontWeight: 600,
-                                            display: 'inline-block'
-                                        }}>
-                                            {rule.severity}
-                                        </span>
-                                    )
+                                    const b = getSeverityBadge(rule.severity)
+                                    return <span style={{ background: b.bg, border: `1px solid ${b.border}44`, color: b.text, padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 800 }}>{rule.severity}</span>
                                 })()}
                             </div>
-                            <div style={{ color: 'var(--text-secondary)' }}>-</div>
+                            <div style={{ textAlign: 'right' }}><button className="btn-icon" style={{ opacity: 0.3 }} disabled><Trash2 size={16} /></button></div>
                         </div>
                     ))}
                 </div>
-            )}
+            </div>
         </div>
     )
 }

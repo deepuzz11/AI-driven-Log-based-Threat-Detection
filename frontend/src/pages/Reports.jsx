@@ -1,15 +1,29 @@
-import React from 'react'
-import { Search, Download, AlertTriangle, ShieldAlert, Bug, Wifi } from 'lucide-react'
+import React, { useState } from 'react'
+import { Search, Download, ShieldAlert, Bug, Wifi, AlertTriangle } from 'lucide-react'
+import StatusBadge from '../components/StatusBadge'
+import IncidentModal from '../components/IncidentModal'
 
 export default function Reports() {
-    const reports = [
+    const [incidents, setIncidents] = useState([
         { id: 'REP-1049', date: '2026-03-09', type: 'Exploits', severity: 'Critical', status: 'Mitigated', icon: ShieldAlert },
         { id: 'REP-1048', date: '2026-03-08', type: 'Fuzzers', severity: 'High', status: 'Under Review', icon: Bug },
         { id: 'REP-1047', date: '2026-03-08', type: 'DoS', severity: 'Medium', status: 'Closed', icon: Wifi },
         { id: 'REP-1046', date: '2026-03-07', type: 'Reconnaissance', severity: 'Low', status: 'Closed', icon: AlertTriangle },
         { id: 'REP-1045', date: '2026-03-07', type: 'Backdoor', severity: 'Critical', status: 'Mitigated', icon: ShieldAlert },
         { id: 'REP-1044', date: '2026-03-06', type: 'Worms', severity: 'High', status: 'Closed', icon: Bug },
-    ]
+    ])
+
+    const [selectedIncident, setSelectedIncident] = useState(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    const handleStatusChange = (id, newStatus) => {
+        setIncidents(prev => prev.map(inc => inc.id === id ? { ...inc, status: newStatus } : inc))
+    }
+
+    const openDetails = (incident) => {
+        setSelectedIncident(incident)
+        setIsModalOpen(true)
+    }
 
     const severityColor = (s) => {
         if (s === 'Critical') return { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-red)' }
@@ -25,52 +39,54 @@ export default function Reports() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '12px' }}>
                     <div className="slide-up stagger-3">
                         <h1 className="text-gradient" style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-                            Incident Reports
+                            Incident Forensics
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-                            Detailed logs of previously intercepted zero-day threats and anomalies.
+                            Technical audit trail for intercepted anomalies and high-velocity threats.
                         </p>
                     </div>
                     <button className="btn btn-secondary slide-up stagger-3">
-                        <Download size={16} /> Export CSV
+                        <Download size={16} /> Export Forensic Log
                     </button>
                 </div>
 
                 <div className="slide-up stagger-4" style={{ position: 'relative', marginBottom: '24px' }}>
-                    <Search size={16} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }} />
-                    <input type="text" className="form-input" placeholder="Search report ID or threat type..." style={{ paddingLeft: '36px', width: '100%', boxSizing: 'border-box' }} />
+                    <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                    <input type="text" className="input-pro" placeholder="Search operational audit trail..." style={{ paddingLeft: '36px', width: '100%', boxSizing: 'border-box' }} />
                 </div>
 
                 <div className="slide-up stagger-5 table-responsive" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                            <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Report ID</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Date Detected</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Threat Category</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Severity</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Resolution</th>
+                            <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                <th style={{ padding: '14px 16px', fontWeight: 700 }}>Record ID</th>
+                                <th style={{ padding: '14px 16px', fontWeight: 700 }}>Detection Date</th>
+                                <th style={{ padding: '14px 16px', fontWeight: 700 }}>Threat Class</th>
+                                <th style={{ padding: '14px 16px', fontWeight: 700 }}>Severity</th>
+                                <th style={{ padding: '14px 16px', fontWeight: 700 }}>Operational Resolution</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {reports.map((r, i) => {
+                            {incidents.map((r, i) => {
                                 const Icon = r.icon
                                 const sev = severityColor(r.severity)
                                 return (
-                                    <tr key={i} style={{ borderBottom: '1px solid var(--border)', fontSize: '14px', transition: 'background 0.15s' }}>
-                                        <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{r.id}</td>
+                                    <tr key={i} className="rule-row" style={{ borderBottom: '1px solid var(--border)', fontSize: '13px', cursor: 'pointer' }} onClick={() => openDetails(r)}>
+                                        <td style={{ padding: '14px 16px', color: '#fff', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{r.id}</td>
                                         <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{r.date}</td>
                                         <td style={{ padding: '14px 16px' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
                                                 <Icon size={14} style={{ color: 'var(--accent-red)' }} /> {r.type}
                                             </span>
                                         </td>
                                         <td style={{ padding: '14px 16px' }}>
-                                            <span className="glass-badge" style={{ backgroundColor: sev.bg, color: sev.color }}>
-                                                {r.severity}
+                                            <span className="glass-badge" style={{ backgroundColor: sev.bg, color: sev.color, border: `1px solid ${sev.color}33`, fontSize: '11px', fontWeight: 700 }}>
+                                                {r.severity.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '14px 16px', color: r.status === 'Mitigated' ? 'var(--accent-green)' : 'var(--text-secondary)' }}>{r.status}</td>
+                                        <td style={{ padding: '14px 16px' }}>
+                                            <StatusBadge status={r.status} onClick={(e) => { e.stopPropagation(); openDetails(r); }} />
+                                        </td>
                                     </tr>
                                 )
                             })}
@@ -79,6 +95,13 @@ export default function Reports() {
                 </div>
 
             </div>
+
+            <IncidentModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                incident={selectedIncident}
+                onStatusChange={handleStatusChange}
+            />
         </div>
     )
 }
