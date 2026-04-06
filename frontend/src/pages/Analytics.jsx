@@ -17,7 +17,7 @@ export default function Analytics() {
 
     useEffect(() => {
         // Fetch analytics data from backend
-        fetch('/api/sentinel/analytics')
+        fetch('http://localhost:8000/api/analytics')
             .then(res => res.json())
             .then(data => {
                 setAnalyticsData(data)
@@ -68,32 +68,21 @@ export default function Analytics() {
         ]
     }
 
-    // Build pie chart data for distribution
-    const pieData = {
-        labels: analyticsData.traffic_distribution.labels.map((l, i) => 
-            `${l} (${analyticsData.traffic_distribution.percentages[i]}%)`
-        ),
+    // Build donut chart data
+    const donutData = {
+        labels: analyticsData.traffic_distribution.labels,
         datasets: [
             {
-                data: analyticsData.traffic_distribution.percentages,
+                data: analyticsData.traffic_distribution.data,
                 backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
                     'rgba(239, 68, 68, 0.8)',
                     'rgba(245, 158, 11, 0.8)',
                     'rgba(139, 92, 246, 0.8)',
-                    'rgba(6, 182, 212, 0.8)',
-                    'rgba(236, 72, 153, 0.8)'
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(6, 182, 212, 0.8)'
                 ],
-                hoverBackgroundColor: [
-                    'rgba(59, 130, 246, 1)',
-                    'rgba(239, 68, 68, 1)',
-                    'rgba(245, 158, 11, 1)',
-                    'rgba(139, 92, 246, 1)',
-                    'rgba(6, 182, 212, 1)',
-                    'rgba(236, 72, 153, 1)'
-                ],
-                borderWidth: 2,
-                borderColor: 'rgba(255,255,255,0.05)',
+                borderWidth: 0,
             }
         ]
     }
@@ -103,12 +92,20 @@ export default function Analytics() {
         labels: analyticsData.attack_vectors.labels,
         datasets: [
             {
-                label: 'Interception Count',
+                label: 'Attack Frequency',
                 data: analyticsData.attack_vectors.data,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 0.8)',
-                borderWidth: 1,
-                borderRadius: 4,
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.7)',
+                    'rgba(245, 158, 11, 0.7)',
+                    'rgba(139, 92, 246, 0.7)',
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(236, 72, 153, 0.7)',
+                    'rgba(6, 182, 212, 0.7)',
+                    'rgba(16, 185, 129, 0.7)',
+                    'rgba(107, 114, 128, 0.7)',
+                ],
+                borderRadius: 6,
+                borderSkipped: false,
             }
         ]
     }
@@ -117,37 +114,27 @@ export default function Analytics() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { labels: { color: '#a1a1aa', font: { size: 11, family: "'JetBrains Mono', monospace" } } },
-            tooltip: {
-                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                titleFont: { size: 13, family: "'JetBrains Mono', monospace" },
-                bodyFont: { size: 12, family: "'JetBrains Mono', monospace" },
-                callbacks: {
-                    label: (context) => {
-                        const label = context.label || '';
-                        const pct = context.parsed || 0;
-                        const idx = context.dataIndex;
-                        const count = analyticsData.traffic_distribution.counts[idx];
-                        return `${label}: ${pct}% (${count.toLocaleString()} logs)`;
-                    }
-                }
-            }
+            legend: { labels: { color: '#a1a1aa', font: { size: 12 } } }
+        },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a1a1aa' } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a1a1aa' } }
         }
     }
 
-    const pieOptions = {
-        ...chartOptions,
+    const donutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-            ...chartOptions.plugins,
-            legend: { position: 'right', labels: { color: '#a1a1aa', padding: 20, font: { size: 10 } } }
+            legend: { position: 'bottom', labels: { color: '#a1a1aa', padding: 12, font: { size: 11 } } }
         }
     }
 
     const stats = [
-        { label: 'Total Logs Processed', value: analyticsData.stats.total_logs_processed.toLocaleString(), icon: Activity, color: 'var(--accent-blue)' },
+        { label: 'Total Logs Processed', value: analyticsData.stats.total_logs_processed.toLocaleString(), icon: Activity, color: 'var(--text-primary)' },
         { label: 'Threats Intercepted', value: analyticsData.stats.threats_intercepted.toLocaleString(), icon: ShieldAlert, color: 'var(--accent-red)' },
-        { label: 'Active Rules', value: analyticsData.stats.active_rules, icon: Zap, color: 'var(--accent-amber)' },
-        { label: 'Avg Inference Time', value: `${analyticsData.stats.avg_inference_time_ms}ms`, icon: Clock, color: 'var(--accent-cyan)' },
+        { label: 'Active Rules', value: analyticsData.stats.active_rules, icon: Zap, color: 'var(--accent-green)' },
+        { label: 'Avg Inference Time', value: `${analyticsData.stats.avg_inference_time_ms}ms`, icon: Clock, color: 'var(--accent-blue)' },
     ]
 
     const systemMetrics = [
@@ -166,10 +153,10 @@ export default function Analytics() {
             <div className="card glass-panel fade-in-scale stagger-1" style={{ padding: '28px' }}>
                 <div className="slide-up stagger-2">
                     <h1 className="text-gradient" style={{ fontSize: '24px', fontWeight: 600, marginBottom: '4px' }}>
-                        Operational Analytics
+                        Threat Analytics Platform
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
-                        Quantitative reporting on system throughput, host metrics, and threat demographics.
+                        System-wide overview of logging activity and hybrid engine interception rates.
                     </p>
                 </div>
 
@@ -177,12 +164,12 @@ export default function Analytics() {
                     {stats.map((s, i) => {
                         const Icon = s.icon
                         return (
-                            <div key={i} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', border: `1px solid rgba(255,255,255,0.03)` }}>
+                            <div key={i} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Icon size={14} style={{ color: s.color, opacity: 0.8 }} />
-                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{s.label}</span>
+                                    <Icon size={16} style={{ color: s.color, opacity: 0.8 }} />
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</span>
                                 </div>
-                                <span style={{ fontSize: '24px', color: '#fff', fontWeight: 800, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</span>
+                                <span style={{ fontSize: '28px', color: s.color, fontWeight: 700 }}>{s.value}</span>
                             </div>
                         )
                     })}
@@ -192,15 +179,15 @@ export default function Analytics() {
             {/* ── CHARTS ROW ── */}
             <div className="slide-up stagger-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
                 <div className="card glass-panel" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Traffic Volume Trend</h3>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px', color: 'var(--text-primary)' }}>Network Traffic Volume</h3>
                     <div style={{ height: '280px' }}>
                         <Line data={lineData} options={chartOptions} />
                     </div>
                 </div>
                 <div className="card glass-panel" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '20px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Threat Distribution (Current Window)</h3>
-                    <div style={{ height: '280px', position: 'relative' }}>
-                        <Pie data={pieData} options={pieOptions} />
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px', color: 'var(--text-primary)' }}>Traffic Distribution</h3>
+                    <div style={{ height: '280px', display: 'flex', justifyContent: 'center' }}>
+                        <Doughnut data={donutData} options={donutOptions} />
                     </div>
                 </div>
             </div>

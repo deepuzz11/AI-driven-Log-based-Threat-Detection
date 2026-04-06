@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { FileText, Search, Trash2, Plus, CheckCircle, Loader2, Filter } from 'lucide-react'
 
-const API = '/api/sentinel'
+const API = '/api'
 
 export default function Rules() {
     const [rules, setRules] = useState([])
@@ -61,19 +61,19 @@ export default function Rules() {
     }
 
     const addRule = async () => {
-        if (!newRuleForm.name || !newRuleForm.regex || !newRuleForm.category) {
-            toast.error('Please fill in all fields')
+        if (!newRuleForm.name || !newRuleForm.regex) {
+            toast.error('Name and Regex are required')
             return
         }
         try {
-            const r = await fetch(`${API}/rules/add`, {
+            const r = await fetch(`${API}/add-rule`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newRuleForm)
             })
             const data = await r.json()
             if (data.added) {
-                toast.success('Rule added successfully')
+                toast.success(`Rule "${newRuleForm.name}" added successfully`)
                 setNewRuleForm({
                     name: '',
                     regex: '',

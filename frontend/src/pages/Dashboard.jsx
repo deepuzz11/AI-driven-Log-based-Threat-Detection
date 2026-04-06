@@ -16,7 +16,7 @@ import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
 import ExecutiveSummary from '../components/ExecutiveSummary'
 
-const API = '/api/sentinel'
+const API = '/api'
 
 export default function Dashboard() {
     const [stats, setStats] = useState(null)
@@ -26,6 +26,7 @@ export default function Dashboard() {
     const [analyzing, setAnalyzing] = useState(false)
     const [pipelineState, setPipelineState] = useState('idle')
     const [rowIndex, setRowIndex] = useState('')
+    const [activeTab, setActiveTab] = useState('overview')
     const [ruleForm, setRuleForm] = useState({ name: '', regex: '', category: '', severity: 'HIGH', remedy: '' })
 
     useEffect(() => {
@@ -35,7 +36,7 @@ export default function Dashboard() {
     const pickRandom = useCallback(async () => {
         setLoading(true); setResult(null); setPipelineState('idle')
         try {
-            const r = await fetch(`${API}/investigate/sample/random`)
+            const r = await fetch(`${API}/sample/random`)
             const data = await r.json()
             setSample(data); setRowIndex(String(data.index))
             toast.custom((t) => (
@@ -69,7 +70,7 @@ export default function Dashboard() {
         if (!rowIndex) return
         setLoading(true); setResult(null); setPipelineState('idle')
         try {
-            const r = await fetch(`${API}/investigate/sample/${rowIndex}`)
+            const r = await fetch(`${API}/sample/${rowIndex}`)
             if (!r.ok) throw new Error()
             const data = await r.json()
             setSample(data)
@@ -104,6 +105,7 @@ export default function Dashboard() {
         setAnalyzing(true); setResult(null)
         setPipelineState('step1')
 
+        // Remove the standard toast.promise, as we want custom loading components
         const toastId = toast.custom((t) => (
             <div className="custom-toast loading slide-down">
                 <div className="custom-toast-icon"><Loader2 size={18} className="spinner" /></div>
@@ -115,7 +117,7 @@ export default function Dashboard() {
         ), { duration: Infinity })
 
         try {
-            const r = await fetch(`${API}/investigate/analyze`, {
+            const r = await fetch(`${API}/analyze`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ row: sample.row })
             })
@@ -186,7 +188,7 @@ export default function Dashboard() {
 
     const addRule = useCallback(async () => {
         try {
-            const r = await fetch(`${API}/rules/add`, {
+            const r = await fetch(`${API}/add-rule`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(ruleForm)
             })
@@ -225,7 +227,7 @@ export default function Dashboard() {
     return (
         <div className="main-layout layout-pro dashboard-page">
 
-            {/* ── LEFT INVESTIGATION PANEL ── */}
+            {/* ── LEFT PANEL ── */}
             <div className="side-panel fade-in-scale stagger-1">
                 <SamplePicker
                     stats={stats}
@@ -237,47 +239,46 @@ export default function Dashboard() {
                 <LogViewer sample={sample} />
             </div>
 
-            {/* ── PRIMARY DISCOVERY CONSOLE ── */}
+            {/* ── CENTER PANEL ── */}
             <div className="center-panel fade-in-scale stagger-2">
                 <PipelineTracker state={pipelineState} result={result} />
 
                 {result ? (
                     <div className="analysis-report slide-up stagger-3" style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         
-                        {/* ── TIER 1: VERDICT & FORENSIC CONSTRAINTS ── */}
+                        {/* ── SECTION 1: EXECUTIVE SUMMARY ── */}
+                        <div className="fade-in-scale">
+                            <ExecutiveSummary result={result} />
+                        </div>
+
+                        {/* ── SECTION 2: VERDICT & CLASSIFICATION ── */}
                         <div className="results-grid fade-in-scale">
                             <VerdictCard result={result} />
                             <ClusterCard result={result} />
                         </div>
 
-                        {/* ── TIER 2: EXECUTIVE INTELLIGENCE ── */}
-                        <div className="fade-in-scale">
-                            <ExecutiveSummary result={result} />
-                        </div>
-
-                        {/* ── TIER 3: TECHNICAL EXPLAINABILITY ── */}
+                        {/* ── SECTION 3: EXPLAINABILITY & SUGGESTIONS ── */}
                         <div className="results-grid fade-in-scale">
                             <ExplainPanel result={result} />
                             <SuggestPanel result={result} />
                         </div>
 
-                        {/* ── TIER 4: SIGNATURE MATCHING (IF ANY) ── */}
+                        {/* ── SECTION 4: RULE HITS (IF ANY) ── */}
                         {result.rule_hits && result.rule_hits.length > 0 && (
                             <div className="fade-in-scale">
                                 <RuleHitsPanel ruleHits={result.rule_hits} />
                             </div>
                         )}
 
-                        {/* ── TIER 5: ADAPTIVE HARDENING ── */}
+
+                        {/* ── SECTION 5: RULE TUNING ── */}
                         <div className="fade-in-scale">
-                            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '24px', marginTop: '8px' }}>
-                                <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    <Shield size={18} color="var(--accent-blue)" />
-                                    Security Policy Hardening
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '8px' }}>
+                                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Shield size={20} color="var(--accent-blue)" />
+                                    Security Rule Tuning & Hardening
                                 </h3>
-                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', marginTop: '-8px' }}> 
-                                    Update local signatures to permanently block similar traffic patterns across the cluster.
-                                </p>
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', marginTop: '-8px' }}> Add signature-based detections to rules.txt to permanently block similar patterns. </p>
                                 <RuleAddPanel
                                     ruleForm={ruleForm} setRuleForm={setRuleForm}
                                     addRule={addRule} ruleMsg={null}
@@ -286,15 +287,16 @@ export default function Dashboard() {
                         </div>
                     </div>
                 ) : (
-                    <div className="card glass-panel slide-up stagger-3" style={{ padding: '80px 32px', textAlign: 'center', border: '1px solid var(--glass-border)' }}>
-                        <div style={{ fontSize: '48px', marginBottom: '24px', opacity: 0.2 }}>🔍</div>
-                        <h2 className="text-gradient" style={{ fontSize: '22px', fontWeight: 700, marginBottom: '12px' }}>Awaiting Forensic Data</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '340px', margin: '0 auto', lineHeight: 1.6 }}>
-                            Initiate the hybrid analysis pipeline by selecting a log sample from the source manifest on the left.
+                    <div className="card glass-panel slide-up stagger-3" style={{ padding: '64px 32px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '32px', marginBottom: '16px', opacity: 0.5 }}>📊</div>
+                        <h2 className="text-gradient" style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Awaiting Data</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '300px', margin: '0 auto' }}>
+                            Select a sample from the left panel and run the hybrid analysis to see the detection pipeline in action.
                         </p>
                     </div>
                 )}
             </div>
+
         </div>
     )
 }

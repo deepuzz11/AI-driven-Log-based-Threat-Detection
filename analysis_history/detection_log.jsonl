@@ -46,3 +46,6 @@
 {"timestamp": "2026-04-06T15:20:23.576531", "sample_index": 20269, "attack_type": "GENERIC", "method": "hybrid-correlated", "rules_matched": 6}
 {"timestamp": "2026-04-06T15:28:16.089262", "sample_index": 47200, "attack_type": "FUZZERS", "method": "hybrid-correlated", "rules_matched": 5}
 {"timestamp": "2026-04-06T15:28:21.952915", "sample_index": 47200, "attack_type": "FUZZERS", "method": "hybrid-correlated", "rules_matched": 5}
+{"timestamp": "2026-04-06T15:37:27.429597", "sample_index": 234, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}
+{"timestamp": "2026-04-06T15:37:40.992917", "sample_index": 234, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}
+{"timestamp": "2026-04-06T15:37:44.230179", "sample_index": 234, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}

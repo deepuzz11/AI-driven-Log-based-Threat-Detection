@@ -26,14 +26,13 @@ function ExplainPanel({ result }) {
                     </div>
                 ) : (
                     <>
-                        {(result.feature_importance || result.ml_details?.feature_importance)?.length > 0 && (
+                        {result.feature_importance?.length > 0 && (
                             <div className="feature-list">
                                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 8 }}>
                                     Top Contributing Features
                                 </div>
-                                {(result.feature_importance || result.ml_details?.feature_importance).map((f, i) => {
-                                    const features = (result.feature_importance || result.ml_details?.feature_importance);
-                                    const maxImp = features[0].importance
+                                {result.feature_importance.map((f, i) => {
+                                    const maxImp = result.feature_importance[0].importance
                                     const pct = maxImp > 0 ? (f.importance / maxImp) * 100 : 0
                                     return (
                                         <div className="feature-item" key={i}>
@@ -47,24 +46,20 @@ function ExplainPanel({ result }) {
                                 })}
                             </div>
                         )}
-                        {(result.ml_details?.class_probabilities || result.class_probabilities) && 
-                         Object.keys(result.ml_details?.class_probabilities || result.class_probabilities || {}).length > 0 && (
-                            <div className="prob-grid" style={{ marginTop: '20px' }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-blue)', marginBottom: 8 }}>
-                                    Prediction Confidence (All Classes)
-                                </div>
-                                {Object.entries(result.ml_details?.class_probabilities || result.class_probabilities || {})
+                        {result.class_probabilities && Object.keys(result.class_probabilities).length > 0 && (
+                            <div className="prob-grid">
+                                {Object.entries(result.class_probabilities)
                                     .sort(([, a], [, b]) => b - a)
                                     .map(([cls, prob]) => (
                                         <div className="prob-item" key={cls}>
                                             <span className="prob-name">{cls}</span>
                                             <span className="prob-value" style={{
-                                                color: prob > 40 ? 'var(--accent-red)' : 'var(--text-secondary)'
+                                                color: prob > 30 ? 'var(--accent-red)' : 'var(--text-secondary)'
                                             }}>{prob}%</span>
                                             <div className="prob-bar">
                                                 <div className="prob-bar-fill" style={{
                                                     width: `${prob}%`,
-                                                    background: prob > 40 ? 'var(--accent-red)' : prob > 15 ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'
+                                                    background: prob > 30 ? 'var(--accent-red)' : 'var(--accent-blue)'
                                                 }} />
                                             </div>
                                         </div>

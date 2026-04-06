@@ -6,7 +6,7 @@ import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
 import '../styles/RealtimeCorrelation.css'
 
-const API = '/api/sentinel/realtime'
+const API = '/api'
 
 export default function RealtimeCorrelation() {
     const [isRunning, setIsRunning] = useState(false)
@@ -24,7 +24,7 @@ export default function RealtimeCorrelation() {
     const startRealtimeGeneration = useCallback(async () => {
         try {
             const eps = parseInt(eventRate) || 5
-            await fetch(`${API}/start?eps=${eps}`, { method: 'POST' })
+            await fetch(`${API}/realtime/start?eps=${eps}`, { method: 'POST' })
             setIsRunning(true)
             logCounterRef.current = 0
             setRecentLogs([])
@@ -81,7 +81,7 @@ export default function RealtimeCorrelation() {
     // Stop real-time generation
     const stopRealtimeGeneration = useCallback(async () => {
         try {
-            await fetch(`${API}/stop`, { method: 'POST' })
+            await fetch(`${API}/realtime/stop`, { method: 'POST' })
             if (eventSourceRef.current) {
                 eventSourceRef.current.close()
             }
