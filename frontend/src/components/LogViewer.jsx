@@ -22,7 +22,7 @@ function LogViewer({ sample }) {
         <div className="card slide-up stagger-2">
             <div className="card-header">
                 <FileCode size={16} style={{ marginRight: '10px', color: 'var(--accent-green)' }} />
-                <span>Forensic Captured Data — PROBE #{sample.index}</span>
+                <span>Analysis Captured Data — PROBE #{sample.index}</span>
             </div>
             <div className="card-body" style={{ padding: '0' }}>
                 <div className="custom-scrollbar" style={{ maxHeight: '500px', overflowY: 'auto' }}>

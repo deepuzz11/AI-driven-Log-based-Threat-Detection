@@ -2,7 +2,7 @@
 
 :root,
 :root[data-theme="dark"] {
-  /* Apex Premium Command Palette */
+  /* CORE Premium Command Palette */
   --bg-base: #020408;
   --bg-app: #04060a;
   --bg-surface: rgba(15, 23, 42, 0.45);
@@ -23,7 +23,7 @@
   --font-size-base: 13.5px;
   --font-size-tech: 11px;
 
-  /* Apex Accents */
+  /* CORE Accents */
   --accent-blue: #3b82f6;
   --accent-cyan: #06b6d4;
   --accent-red: #f43f5e;
@@ -31,8 +31,8 @@
   --accent-purple: #a855f7;
 
   /* Command Glows */
-  --shadow-apex: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(59, 130, 246, 0.1);
-  --transition-apex: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-CORE: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(59, 130, 246, 0.1);
+  --transition-CORE: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
@@ -52,20 +52,20 @@ h1, h2, h3, h4, .text-gradient {
   font-weight: 700;
 }
 
-/* ── APEX PANEL ARCHITECTURE ─────────────────────────── */
+/* ── CORE PANEL ARCHITECTURE ─────────────────────────── */
 .card {
   background: var(--glass-bg);
   backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  transition: var(--transition-apex);
+  transition: var(--transition-CORE);
   position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .card:hover {
   border-color: var(--glass-border-hover);
-  box-shadow: var(--shadow-apex);
+  box-shadow: var(--shadow-CORE);
 }
 
 .card-header {
@@ -82,8 +82,8 @@ h1, h2, h3, h4, .text-gradient {
   align-items: center;
 }
 
-/* ── APEX LAYOUT ENGINE ──────────────────────────────── */
-.layout-apex {
+/* ── CORE LAYOUT ENGINE ──────────────────────────────── */
+.layout-CORE {
   display: grid;
   grid-template-columns: 420px 1fr;
   gap: 32px;
@@ -108,7 +108,7 @@ h1, h2, h3, h4, .text-gradient {
   padding: 10px 14px;
   font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
-  transition: var(--transition-apex);
+  transition: var(--transition-CORE);
 }
 
 .form-input:focus {
@@ -117,8 +117,8 @@ h1, h2, h3, h4, .text-gradient {
   background: rgba(0, 0, 0, 0.5);
 }
 
-/* ── APEX BUTTONS ────────────────────────────────────── */
-.btn-apex {
+/* ── CORE BUTTONS ────────────────────────────────────── */
+.btn-CORE {
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 800;
@@ -127,32 +127,32 @@ h1, h2, h3, h4, .text-gradient {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  transition: var(--transition-apex);
+  transition: var(--transition-CORE);
   display: flex;
   align-items: center;
   gap: 10px;
   border: 1px solid transparent;
 }
 
-.btn-apex-primary {
+.btn-CORE-primary {
   background: var(--accent-blue);
   color: #fff;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
-.btn-apex-primary:hover {
+.btn-CORE-primary:hover {
   transform: translateY(-2px);
   filter: brightness(1.15);
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45);
 }
 
-.btn-apex-secondary {
+.btn-CORE-secondary {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-bright);
   color: var(--text-secondary);
 }
 
-.btn-apex-secondary:hover {
+.btn-CORE-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--accent-blue);
   color: #fff;

@@ -197,9 +197,9 @@ export default function Dashboard() {
 
     return (
         <div className="page-full fade-in-scale stagger-1">
-            <div className="layout-apex">
+            <div className="layout-CORE">
                 
-                {/* ── COMMAND PANE 1: DEEP FORENSICS ── */}
+                {/* ── COMMAND PANE 1: DEEP Analysis ── */}
                 <div className="command-pane">
                     <SamplePicker
                         stats={stats}
@@ -219,7 +219,7 @@ export default function Dashboard() {
                         <div className="analysis-report slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                             <div className="card" style={{ borderLeft: '4px solid var(--accent-blue)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
                                 <div className="card-header" style={{ color: 'var(--accent-blue)', display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>APEX INTELLIGENCE BRIEFING — {result.prediction ? result.prediction.toUpperCase() : result.decision}</span>
+                                    <span>SYSTEM THREAT BRIEFING — {result.prediction ? result.prediction.toUpperCase() : result.decision}</span>
                                     <span style={{ fontSize: '10px', opacity: 0.4 }}>NODE-01 EXECUTION</span>
                                 </div>
                                 <div className="card-body">
@@ -243,7 +243,7 @@ export default function Dashboard() {
                             <Activity size={64} style={{ color: 'var(--accent-blue)', opacity: 0.1, margin: '0 auto 32px' }} />
                             <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.02em' }}>Awaiting Operational Stream</h2>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '14.5px', maxWidth: '380px', margin: '0 auto', lineHeight: '1.6' }}>
-                                Initialise the APEX intelligence pipeline by selecting a target log cluster from the forensics pane. 
+                                Initialise the CORE intelligence pipeline by selecting a target log cluster from the Analysis pane. 
                             </p>
                         </div>
                     )}

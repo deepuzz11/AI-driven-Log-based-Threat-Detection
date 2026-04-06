@@ -37,7 +37,7 @@ export default function IncidentModal({ isOpen, onClose, incident, onStatusChang
           </div>
           <div>
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{incident.id}</div>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>{incident.type} Forensics</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>{incident.type} Analysis</h2>
           </div>
         </div>
 

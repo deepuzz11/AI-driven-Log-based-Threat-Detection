@@ -42,7 +42,7 @@ function App() {
       case '/analytics': return 'Security Insights'
       case '/correlation': return 'Threat Correlation'
       case '/realtime': return 'Behavioral Ops'
-      case '/reports': return 'Incident Forensics'
+      case '/reports': return 'Incident Analysis'
       case '/rules': return 'Detection Rules'
       case '/integrations': return 'Cloud Connectors'
       case '/settings': return 'System Settings'
@@ -97,8 +97,8 @@ function App() {
             <span className="sidebar-logo" style={{ fontSize: '18px', gap: '12px', display: 'flex', alignItems: 'center' }}>
               <Shield size={24} className="text-accent-blue" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.4))' }} />
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1' }}>
-                <span style={{ letterSpacing: '0.12em', fontWeight: 800, fontSize: '15px' }}>PHANTOM ID</span>
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.2em', marginTop: '2px' }}>APEX COMMAND</span>
+                <span style={{ letterSpacing: '0.12em', fontWeight: 800, fontSize: '15px' }}>DeepGuard</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.2em', marginTop: '2px' }}>CORE SYSTEM</span>
               </div>
             </span>
             <button
@@ -129,8 +129,8 @@ function App() {
             </Link>
 
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', margin: '24px 12px 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Operations</div>
-            <Link to="/reports" className={`nav-item ${location.pathname === '/reports' ? 'active' : ''}`} title="Incident Forensics">
-              <FileSearch size={20} /> <span>Incident Forensics</span>
+            <Link to="/reports" className={`nav-item ${location.pathname === '/reports' ? 'active' : ''}`} title="Incident Analysis">
+              <FileSearch size={20} /> <span>Incident Analysis</span>
             </Link>
             <Link to="/rules" className={`nav-item ${location.pathname === '/rules' ? 'active' : ''}`} title="Detection Rules">
               <ShieldAlert size={20} /> <span>Detection Rules</span>

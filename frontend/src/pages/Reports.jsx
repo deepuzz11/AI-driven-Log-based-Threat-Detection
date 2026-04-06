@@ -39,14 +39,14 @@ export default function Reports() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '12px' }}>
                     <div className="slide-up stagger-3">
                         <h1 className="text-gradient" style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-                            Incident Forensics
+                            Incident Analysis
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                             Technical audit trail for intercepted anomalies and high-velocity threats.
                         </p>
                     </div>
                     <button className="btn btn-secondary slide-up stagger-3">
-                        <Download size={16} /> Export Forensic Log
+                        <Download size={16} /> Export Analysis Log
                     </button>
                 </div>
 
