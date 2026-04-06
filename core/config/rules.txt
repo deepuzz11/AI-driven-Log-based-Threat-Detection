@@ -250,4 +250,5 @@
     # Suspicious cloud metadata queries
     ("cloud_metadata_access", r"\b(169\.254\.169\.254|ec2 metadata request|gce metadata server)\b", "cloud"),
 
-    # Suspicious process masquerading
+    # Suspicious process masquerading("auto_learned_recon/scanning_1775487236", r"TCP.*fin", "Recon/Scanning"),
+("auto_learned_recon/scanning_1775487243", r"TCP.*fin", "Recon/Scanning"),
