@@ -97,3 +97,12 @@
 {"timestamp": "2026-04-06T16:52:10.824361", "sample_index": 233, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 90.44, "rule_hits_count": 0, "total_time_ms": 801.55}
 {"timestamp": "2026-04-06T16:53:38.067849", "sample_index": 233, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 90.44, "rule_hits_count": 0, "total_time_ms": 667.69}
 {"timestamp": "2026-04-06T16:53:42.207319", "sample_index": 23245, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 8, "total_time_ms": 1250.2}
+{"timestamp": "2026-04-06T16:56:54.499552", "sample_index": 23245, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 8, "total_time_ms": 101.43}
+{"timestamp": "2026-04-06T16:56:58.306784", "sample_index": 23245, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 8, "total_time_ms": 929.13}
+{"timestamp": "2026-04-06T16:59:41.034957", "sample_index": -1, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "FUZZERS", "confidence": 100.0, "rule_hits_count": 7, "total_time_ms": 385.24}
+{"timestamp": "2026-04-06T17:01:10.689735", "sample_index": 27255, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 4890.55}
+{"timestamp": "2026-04-06T17:01:18.951063", "sample_index": 80534, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 95.41, "rule_hits_count": 0, "total_time_ms": 2640.39}
+{"timestamp": "2026-04-06T17:01:34.519063", "sample_index": 235, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 48.61, "rule_hits_count": 0, "total_time_ms": 1235.0}
+{"timestamp": "2026-04-06T17:01:52.745232", "sample_index": 23435, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 755.16}
+{"timestamp": "2026-04-06T17:02:00.869535", "sample_index": 34945, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 495.56}
+{"timestamp": "2026-04-06T17:02:04.583313", "sample_index": 70951, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 83.77, "rule_hits_count": 0, "total_time_ms": 436.67}

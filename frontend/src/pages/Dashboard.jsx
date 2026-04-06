@@ -8,7 +8,6 @@ import PipelineTracker from '../components/PipelineTracker'
 import VerdictCard from '../components/VerdictCard'
 import ClusterCard from '../components/ClusterCard'
 import ExplainPanel from '../components/ExplainPanel'
-import SuggestPanel from '../components/SuggestPanel'
 import RuleHitsPanel from '../components/RuleHitsPanel'
 import SequenceViewer from '../components/SequenceViewer'
 import CorrelationInsights from '../components/CorrelationInsights'
@@ -238,8 +237,6 @@ export default function Dashboard() {
                             {result.rule_hits && result.rule_hits.length > 0 && (
                                 <RuleHitsPanel ruleHits={result.rule_hits} />
                             )}
-
-                            <SuggestPanel result={result} />
                         </div>
                     ) : (
                         <div className="card" style={{ padding: '80px 40px', textAlign: 'center', minHeight: '640px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(59, 130, 246, 0.03), transparent)' }}>
