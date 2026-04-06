@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
-import { AlertTriangle, CheckCircle2, Shield, Loader2, X } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Shield, Loader2, X, Activity } from 'lucide-react'
 
 import SamplePicker from '../components/SamplePicker'
 import LogViewer from '../components/LogViewer'
@@ -205,8 +205,8 @@ export default function Dashboard() {
                     <SamplePicker
                         stats={stats}
                         rowIndex={rowIndex} setRowIndex={setRowIndex}
-                        onRandom={pickRandom} onIndex={pickByIndex}
-                        onAnalyze={runAnalysis} loading={loading} analyzing={analyzing}
+                        pickRandom={pickRandom} pickByIndex={pickByIndex}
+                        runAnalysis={runAnalysis} loading={loading} analyzing={analyzing}
                         sample={sample}
                     />
                     <LogViewer sample={sample} />
@@ -220,7 +220,7 @@ export default function Dashboard() {
                         <div className="analysis-report slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                             <div className="card" style={{ borderLeft: '4px solid var(--accent-blue)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
                                 <div className="card-header" style={{ color: 'var(--accent-blue)', display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>APEX INTELLIGENCE BRIEFING — {result.classification.toUpperCase()}</span>
+                                    <span>APEX INTELLIGENCE BRIEFING — {result.prediction ? result.prediction.toUpperCase() : result.decision}</span>
                                     <span style={{ fontSize: '10px', opacity: 0.4 }}>NODE-01 EXECUTION</span>
                                 </div>
                                 <div className="card-body">
