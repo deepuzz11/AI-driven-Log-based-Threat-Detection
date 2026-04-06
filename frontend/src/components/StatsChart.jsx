@@ -74,7 +74,7 @@ function StatsChart({ stats }) {
     return (
         <div className="card" style={{ marginTop: '20px' }}>
             <div className="card-header"><span className="icon">📊</span> Analytics Overview</div>
-            <div className="card-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="card-body" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
 
                 {/* Doughnut Chart */}
                 <div style={{ height: '220px', position: 'relative' }}>
