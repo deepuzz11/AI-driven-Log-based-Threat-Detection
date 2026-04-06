@@ -113,3 +113,10 @@
 {"timestamp": "2026-04-06T17:16:00.265976", "sample_index": 706, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "FUZZERS", "confidence": 100.0, "rule_hits_count": 5, "total_time_ms": 706.87}
 {"timestamp": "2026-04-06T17:16:05.290260", "sample_index": 27252, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 227.63}
 {"timestamp": "2026-04-06T17:16:09.038094", "sample_index": 43092, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 55.59, "rule_hits_count": 0, "total_time_ms": 218.52}
+{"timestamp": "2026-04-06T19:19:34.751876", "sample_index": 61522, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 120.23}
+{"timestamp": "2026-04-06T19:21:40.740571", "sample_index": 61522, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 85.02}
+{"timestamp": "2026-04-06T19:22:59.141025", "sample_index": 53792, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 54.72}
+{"timestamp": "2026-04-06T19:23:05.545614", "sample_index": 53792, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 63.69}
+{"timestamp": "2026-04-06T19:27:37.985674", "sample_index": 53792, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 72.5}
+{"timestamp": "2026-04-06T19:27:53.356546", "sample_index": 52190, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "GENERIC", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 92.83}
+{"timestamp": "2026-04-06T19:29:46.438646", "sample_index": 25555, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.98, "rule_hits_count": 0, "total_time_ms": 746.4}

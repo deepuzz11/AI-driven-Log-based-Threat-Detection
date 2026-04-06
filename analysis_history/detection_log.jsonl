@@ -69,3 +69,9 @@
 {"timestamp": "2026-04-06T17:15:13.319614", "sample_index": 706, "attack_type": "FUZZERS", "method": "hybrid-correlated", "rules_matched": 5}
 {"timestamp": "2026-04-06T17:16:00.265976", "sample_index": 706, "attack_type": "FUZZERS", "method": "hybrid-correlated", "rules_matched": 5}
 {"timestamp": "2026-04-06T17:16:09.038094", "sample_index": 43092, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}
+{"timestamp": "2026-04-06T19:19:34.751876", "sample_index": 61522, "attack_type": "EXPLOITS", "method": "hybrid-correlated", "rules_matched": 1}
+{"timestamp": "2026-04-06T19:21:40.740571", "sample_index": 61522, "attack_type": "EXPLOITS", "method": "hybrid-correlated", "rules_matched": 1}
+{"timestamp": "2026-04-06T19:22:59.141025", "sample_index": 53792, "attack_type": "GENERIC", "method": "hybrid-correlated", "rules_matched": 1}
+{"timestamp": "2026-04-06T19:23:05.545614", "sample_index": 53792, "attack_type": "GENERIC", "method": "hybrid-correlated", "rules_matched": 1}
+{"timestamp": "2026-04-06T19:27:37.985674", "sample_index": 53792, "attack_type": "GENERIC", "method": "hybrid-correlated", "rules_matched": 1}
+{"timestamp": "2026-04-06T19:27:53.356546", "sample_index": 52190, "attack_type": "GENERIC", "method": "hybrid-correlated", "rules_matched": 1}
