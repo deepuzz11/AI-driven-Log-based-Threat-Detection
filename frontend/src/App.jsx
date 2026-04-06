@@ -94,9 +94,12 @@ function App() {
         {/* ── SIDEBAR ───────────────────────────────────────── */}
         <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="sidebar-header" style={{ height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
-            <span className="sidebar-logo" style={{ fontSize: '20px', gap: '10px', display: 'flex', alignItems: 'center' }}>
-              <Shield size={28} className="text-accent-blue" strokeWidth={2.5} style={{ color: 'var(--accent-blue)' }} />
-              <span style={{ letterSpacing: '-0.02em', fontWeight: 800 }}>ThreatEngine Sentinel</span>
+            <span className="sidebar-logo" style={{ fontSize: '18px', gap: '10px', display: 'flex', alignItems: 'center' }}>
+              <Shield size={24} className="text-accent-blue" strokeWidth={2.5} style={{ color: 'var(--accent-blue)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.1' }}>
+                <span style={{ letterSpacing: '0.05em', fontWeight: 800 }}>PHANTOM ID</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.1em' }}>SENTINEL CONSOLE</span>
+              </div>
             </span>
             <button
               className="sidebar-toggle-btn"

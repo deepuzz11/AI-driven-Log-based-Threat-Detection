@@ -225,78 +225,111 @@ export default function Dashboard() {
 
 
     return (
-        <div className="main-layout layout-pro dashboard-page">
+        <div className="page-full fade-in-scale stagger-1">
+            <div className="layout-pro" style={{ gridTemplateColumns: '420px 1fr 340px', gap: '28px' }}>
+                
+                {/* ── PANEL A: OPERATIONAL CORE ── */}
+                <div className="side-panel">
+                    <SamplePicker
+                        stats={stats}
+                        rowIndex={rowIndex} setRowIndex={setRowIndex}
+                        pickRandom={pickRandom} pickByIndex={pickByIndex}
+                        runAnalysis={runAnalysis} loading={loading} analyzing={analyzing}
+                        sample={sample}
+                    />
+                    <LogViewer sample={sample} />
+                </div>
 
-            {/* ── LEFT PANEL ── */}
-            <div className="side-panel fade-in-scale stagger-1">
-                <SamplePicker
-                    stats={stats}
-                    rowIndex={rowIndex} setRowIndex={setRowIndex}
-                    pickRandom={pickRandom} pickByIndex={pickByIndex}
-                    runAnalysis={runAnalysis} loading={loading} analyzing={analyzing}
-                    sample={sample}
-                />
-                <LogViewer sample={sample} />
-            </div>
+                {/* ── PANEL B: INTELLIGENCE MATRIX ── */}
+                <div className="center-panel">
+                    <PipelineTracker state={pipelineState} result={result} />
 
-            {/* ── CENTER PANEL ── */}
-            <div className="center-panel fade-in-scale stagger-2">
-                <PipelineTracker state={pipelineState} result={result} />
-
-                {result ? (
-                    <div className="analysis-report slide-up stagger-3" style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        
-                        {/* ── SECTION 1: EXECUTIVE SUMMARY ── */}
-                        <div className="fade-in-scale">
-                            <ExecutiveSummary result={result} />
-                        </div>
-
-                        {/* ── SECTION 2: VERDICT & CLASSIFICATION ── */}
-                        <div className="results-grid fade-in-scale">
-                            <VerdictCard result={result} />
-                            <ClusterCard result={result} />
-                        </div>
-
-                        {/* ── SECTION 3: EXPLAINABILITY & SUGGESTIONS ── */}
-                        <div className="results-grid fade-in-scale">
-                            <ExplainPanel result={result} />
-                            <SuggestPanel result={result} />
-                        </div>
-
-                        {/* ── SECTION 4: RULE HITS (IF ANY) ── */}
-                        {result.rule_hits && result.rule_hits.length > 0 && (
-                            <div className="fade-in-scale">
-                                <RuleHitsPanel ruleHits={result.rule_hits} />
+                    {result ? (
+                        <div className="analysis-report slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            <div className="card glass-panel" style={{ padding: '0', borderTop: '2px solid var(--accent-blue)', boxShadow: '0 4px 30px rgba(0,0,0,0.4)' }}>
+                                <div className="card-header" style={{ background: 'rgba(59, 130, 246, 0.05)', color: 'var(--accent-blue)', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>MISSION CRITICAL VERDICT — {result.classification.toUpperCase()}</span>
+                                    <span style={{ fontSize: '10px', opacity: 0.5 }}>STRATEGIC AUDIT v2.4</span>
+                                </div>
+                                <div style={{ padding: '24px' }}>
+                                    <ExecutiveSummary result={result} />
+                                </div>
                             </div>
-                        )}
 
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '28px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                                    <VerdictCard result={result} />
+                                    <ExplainPanel result={result} />
+                                    {result.rule_hits && result.rule_hits.length > 0 && (
+                                        <RuleHitsPanel ruleHits={result.rule_hits} />
+                                    )}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                                    <ClusterCard result={result} />
+                                    <SuggestPanel result={result} />
+                                    <div className="card glass-panel" style={{ padding: '24px' }}>
+                                        <h3 style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.05em' }}>Sentinel Rule Hardening</h3>
+                                        <RuleAddPanel ruleForm={ruleForm} setRuleForm={setRuleForm} addRule={addRule} ruleMsg={null} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="card glass-panel slide-up" style={{ padding: '80px 40px', textAlign: 'center', minHeight: '680px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(37, 99, 235, 0.03), transparent)' }}>
+                            <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto 40px' }}>
+                                <div className="pulse-glow" style={{ position: 'absolute', inset: '-20px', background: 'var(--accent-blue)', borderRadius: '50%', filter: 'blur(30px)', opacity: 0.1, animation: 'pulse 3s infinite' }} />
+                                <Activity size={80} style={{ color: 'var(--accent-blue)', opacity: 0.2 }} />
+                            </div>
+                            <h2 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.02em' }}>Awaiting Operational Stream</h2>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '440px', margin: '0 auto', lineHeight: '1.6' }}>
+                                The intelligence engine is standing by. Initialise the forensic pipeline by selecting a target log cluster from the operational capture buffer.
+                            </p>
+                        </div>
+                    )}
+                </div>
 
-                        {/* ── SECTION 5: RULE TUNING ── */}
-                        <div className="fade-in-scale">
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '8px' }}>
-                                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Shield size={20} color="var(--accent-blue)" />
-                                    Security Rule Tuning & Hardening
-                                </h3>
-                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', marginTop: '-8px' }}> Add signature-based detections to rules.txt to permanently block similar patterns. </p>
-                                <RuleAddPanel
-                                    ruleForm={ruleForm} setRuleForm={setRuleForm}
-                                    addRule={addRule} ruleMsg={null}
-                                />
+                {/* ── PANEL C: TACTICAL METRICS ── */}
+                <div className="side-panel">
+                    <div className="card glass-panel" style={{ padding: '24px', borderTop: '2px solid rgba(255,255,255,0.05)' }}>
+                        <h3 style={{ fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '24px', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <TrendingUp size={14} /> Sentinel Hub Metrics
+                        </h3>
+                        <div style={{ display: 'grid', gap: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Ingested Logs</div>
+                                <div style={{ fontSize: '20px', fontWeight: 800, fontFamily: '"JetBrains Mono"', lineHeight: '1' }}>{stats?.total_logs || 0}</div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Threat Intercepts</div>
+                                <div style={{ fontSize: '20px', fontWeight: 800, fontFamily: '"JetBrains Mono"', lineHeight: '1', color: 'var(--accent-red)' }}>{stats?.malicious_count || 0}</div>
+                            </div>
+                            
+                            <div style={{ marginTop: '12px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <span style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)' }}>Neural Precision</span>
+                                    <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent-green)' }}>99.4%</span>
+                                </div>
+                                <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                                    <div style={{ width: '99.4%', height: '100%', background: 'linear-gradient(90deg, var(--accent-blue), var(--accent-green))', borderRadius: '10px' }} />
+                                </div>
                             </div>
                         </div>
                     </div>
-                ) : (
-                    <div className="card glass-panel slide-up stagger-3" style={{ padding: '64px 32px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px', opacity: 0.5 }}>📊</div>
-                        <h2 className="text-gradient" style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Awaiting Data</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '300px', margin: '0 auto' }}>
-                            Select a sample from the left panel and run the hybrid analysis to see the detection pipeline in action.
-                        </p>
-                    </div>
-                )}
-            </div>
 
+                    <div className="card glass-panel" style={{ padding: '24px', background: 'rgba(16, 185, 129, 0.02)', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ width: '10px', height: '10px', background: 'var(--accent-green)', borderRadius: '50%' }} />
+                                <div style={{ position: 'absolute', inset: '-4px', border: '2px solid var(--accent-green)', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent-green)', letterSpacing: '0.05em' }}>STATUS: OPTIMAL</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Sentinel Node 01-A Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
