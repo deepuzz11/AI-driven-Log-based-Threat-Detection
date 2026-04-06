@@ -209,47 +209,49 @@ export default function LiveTraffic() {
             </div>
 
             {/* ── CONFIGURATION PANEL ── */}
-            {!isScanning && (
-                <div className="config-panel card glass-panel slide-up" style={{
-                    padding: '20px',
-                    background: 'rgba(5, 5, 7, 0.5)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '12px',
-                    maxWidth: '1600px',
-                    margin: '0 auto',
-                    width: '100%'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
-                        <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                                Events Per Second (EPS)
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                max="50"
-                                value={eventRate}
-                                onChange={(e) => setEventRate(e.target.value)}
-                                style={{
-                                    padding: '10px 14px',
-                                    background: 'var(--bg-surface)',
-                                    border: '1px solid var(--border)',
-                                    color: '#fff',
-                                    borderRadius: '8px',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    fontFamily: '"JetBrains Mono", monospace',
-                                    width: '100px'
-                                }}
-                            />
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                            <p style={{ margin: '0 0 4px 0' }}>⚡ Higher EPS = More events/sec (1-50 recommended)</p>
-                            <p style={{ margin: '0' }}>💡 Start with 5-10 EPS for balanced analysis</p>
-                        </div>
+            <div className="config-panel card glass-panel slide-up" style={{
+                padding: '20px',
+                background: 'rgba(5, 5, 7, 0.5)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                maxWidth: '1600px',
+                margin: '0 auto',
+                width: '100%',
+                opacity: isScanning ? 0.5 : 1,
+                pointerEvents: isScanning ? 'none' : 'auto',
+                transition: 'opacity 0.3s ease'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
+                    <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                            Events Per Second (EPS)
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="50"
+                            value={eventRate}
+                            onChange={(e) => setEventRate(e.target.value)}
+                            disabled={isScanning}
+                            style={{
+                                padding: '10px 14px',
+                                background: 'var(--bg-surface)',
+                                border: '1px solid var(--border)',
+                                color: '#fff',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                fontFamily: '"JetBrains Mono", monospace',
+                                width: '100px'
+                            }}
+                        />
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        <p style={{ margin: '0 0 4px 0' }}>⚡ Higher EPS = More events/sec (1-50 recommended)</p>
+                        <p style={{ margin: '0' }}>💡 Start with 5-10 EPS for balanced analysis</p>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* ── MAIN CONTENT ── */}
             <div className="live-content slide-up stagger-1" style={{ flex: 1, maxWidth: '1600px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>

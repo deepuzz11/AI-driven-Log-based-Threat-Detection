@@ -26,8 +26,8 @@ function ExplainPanel({ result }) {
                     </div>
                 ) : (
                     <>
-                        {result.feature_importance?.length > 0 && (
-                            <div className="feature-list">
+                        {result.feature_importance?.length > 0 ? (
+                            <div className="feature-list" style={{ marginBottom: result.ml_details?.class_probabilities && Object.keys(result.ml_details.class_probabilities).length > 0 ? '20px' : '0' }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 8 }}>
                                     Top Contributing Features
                                 </div>
@@ -45,11 +45,20 @@ function ExplainPanel({ result }) {
                                     )
                                 })}
                             </div>
+                        ) : (
+                            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+                                    <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>Traffic matches standard baseline patterns.</span>
+                                    <br />No significant deviations, anomalies, or malicious signatures detected by the hybrid engine.
+                                </div>
+                            </div>
                         )}
-                        {result.class_probabilities && Object.keys(result.class_probabilities).length > 0 && (
-                            <div className="prob-grid">
-                                {Object.entries(result.class_probabilities)
+                        {result.ml_details?.class_probabilities && Object.keys(result.ml_details.class_probabilities).length > 0 && (
+                            <div className="prob-grid" style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, margin: '0 0 12px 4px' }}>Model Confidence Breakdown</div>
+                                {Object.entries(result.ml_details.class_probabilities)
                                     .sort(([, a], [, b]) => b - a)
+                                    .slice(0, 4) // Show top 4
                                     .map(([cls, prob]) => (
                                         <div className="prob-item" key={cls}>
                                             <span className="prob-name">{cls}</span>

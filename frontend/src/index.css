@@ -85,7 +85,7 @@ h1, h2, h3, h4, .text-gradient {
 /* ── APEX LAYOUT ENGINE ──────────────────────────────── */
 .layout-apex {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 420px 1fr;
   gap: 32px;
   max-width: 1800px;
   margin: 0 auto;

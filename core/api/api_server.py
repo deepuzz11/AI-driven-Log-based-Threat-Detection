@@ -520,7 +520,6 @@ def perform_analysis(row):
     return result
 
 
-
 @app.post("/api/analyze")
 def analyze(body: AnalyzeRequest):
     if not body.row:

@@ -88,3 +88,10 @@
 {"timestamp": "2026-04-06T15:52:18.057577", "sample_index": 5400, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 100.44}
 {"timestamp": "2026-04-06T15:57:40.967073", "sample_index": 65535, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "FUZZERS", "confidence": 100.0, "rule_hits_count": 5, "total_time_ms": 102.88}
 {"timestamp": "2026-04-06T16:44:44.331724", "sample_index": 3478, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 6, "total_time_ms": 467.57}
+{"timestamp": "2026-04-06T16:51:31.864273", "sample_index": 70986, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 71.62, "rule_hits_count": 0, "total_time_ms": 151.82}
+{"timestamp": "2026-04-06T16:51:53.142789", "sample_index": 70986, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 71.62, "rule_hits_count": 0, "total_time_ms": 95.61}
+{"timestamp": "2026-04-06T16:51:56.357559", "sample_index": 70986, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 71.62, "rule_hits_count": 0, "total_time_ms": 708.59}
+{"timestamp": "2026-04-06T16:51:59.162328", "sample_index": 55680, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 4, "total_time_ms": 71.56}
+{"timestamp": "2026-04-06T16:52:01.095455", "sample_index": 55680, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 4, "total_time_ms": 93.24}
+{"timestamp": "2026-04-06T16:52:07.337008", "sample_index": 55680, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 100.0, "rule_hits_count": 4, "total_time_ms": 176.66}
+{"timestamp": "2026-04-06T16:52:10.824361", "sample_index": 233, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 90.44, "rule_hits_count": 0, "total_time_ms": 801.55}
