@@ -146,10 +146,6 @@ function SequenceExplainability({ explainability, correlationStats }) {
                 {/* Detection Metrics */}
                 <div className="metrics-grid">
                     <div className="metric-box">
-                        <div className="metric-label">Rules Triggered</div>
-                        <div className="metric-value">{explainability.unique_rules_hit}</div>
-                    </div>
-                    <div className="metric-box">
                         <div className="metric-label">Malicious Entries</div>
                         <div className="metric-value" style={{ color: 'var(--accent-red)' }}>
                             {explainability.attack_count}

@@ -66,3 +66,6 @@
 {"timestamp": "2026-04-06T17:02:04.583313", "sample_index": 70951, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}
 {"timestamp": "2026-04-06T17:06:51.017429", "sample_index": 3526, "attack_type": "EXPLOITS", "method": "hybrid-correlated", "rules_matched": 4}
 {"timestamp": "2026-04-06T17:09:58.476254", "sample_index": 18901, "attack_type": "GENERIC", "method": "hybrid-correlated", "rules_matched": 8}
+{"timestamp": "2026-04-06T17:15:13.319614", "sample_index": 706, "attack_type": "FUZZERS", "method": "hybrid-correlated", "rules_matched": 5}
+{"timestamp": "2026-04-06T17:16:00.265976", "sample_index": 706, "attack_type": "FUZZERS", "method": "hybrid-correlated", "rules_matched": 5}
+{"timestamp": "2026-04-06T17:16:09.038094", "sample_index": 43092, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}

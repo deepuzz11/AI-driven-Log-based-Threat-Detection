@@ -230,8 +230,8 @@ html, body {
 /* ── THE GHOST-GLASS SCROLLBAR SYSTEM ────────────── */
 /* Professional 12px High-Fidelity Scrollbars */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
 }
 
 ::-webkit-scrollbar-track {
