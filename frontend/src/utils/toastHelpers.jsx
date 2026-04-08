@@ -118,3 +118,49 @@ export const toastInfo = (title, items) => {
 export const clearAllToasts = () => {
     toast.remove()
 }
+
+/**
+ * Confirmation toast with custom styling
+ */
+export const toastConfirmAction = (title, message, actionLabel, onConfirm, onCancel = () => {}) => {
+    toast.custom((t) => (
+        <div className="custom-toast info slide-down" style={{ borderLeft: '4px solid var(--accent-red)' }}>
+            <div className="custom-toast-icon"><AlertTriangle size={18} style={{ color: 'var(--accent-red)' }} /></div>
+            <div className="custom-toast-content" style={{ width: '100%' }}>
+                <div className="custom-toast-title" style={{ color: 'var(--accent-red)' }}>{title}</div>
+                <div className="custom-toast-message" style={{ marginBottom: '12px' }}>{message}</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => { onConfirm(); toast.dismiss(t.id); }} 
+                        style={{
+                            padding: '6px 14px',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            color: 'var(--accent-red)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            flex: 1
+                        }}>
+                        {actionLabel}
+                    </button>
+                    <button onClick={() => { onCancel(); toast.dismiss(t.id); }} 
+                        style={{
+                            padding: '6px 14px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            color: 'var(--text-secondary)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            flex: 1
+                        }}>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+        </div>
+    ), { duration: Infinity })
+}

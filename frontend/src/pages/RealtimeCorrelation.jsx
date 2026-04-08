@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { toastSuccess, toastError } from '../utils/toastHelpers.jsx'
+import { toastSuccess, toastError, toastConfirmAction } from '../utils/toastHelpers.jsx'
 import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from 'lucide-react'
 import SequenceViewer from '../components/SequenceViewer'
 import CorrelationInsights from '../components/CorrelationInsights'
@@ -194,14 +194,22 @@ export default function RealtimeCorrelation() {
 
     // Clear all history
     const clearHistory = useCallback(() => {
-        setRecentLogs([])
-        setThreatHistory([])
-        setAutoLearnedRules([])
-        setLogsCount(0)
-        logCounterRef.current = 0
-        setLogsPage(1)
-        setThreatsPage(1)
-        try { localStorage.removeItem(STORAGE_KEY) } catch(e) {}
+        toastConfirmAction(
+            "Clear Correlation History",
+            "Are you sure you want to permanently delete all correlation history and recent logs?",
+            "Clear History",
+            () => {
+                setRecentLogs([])
+                setThreatHistory([])
+                setAutoLearnedRules([])
+                setLogsCount(0)
+                logCounterRef.current = 0
+                setLogsPage(1)
+                setThreatsPage(1)
+                try { localStorage.removeItem(STORAGE_KEY) } catch(e) {}
+                toastSuccess('History Cleared', 'Correlation data purged successfully')
+            }
+        )
     }, [])
 
     // Cleanup on unmount

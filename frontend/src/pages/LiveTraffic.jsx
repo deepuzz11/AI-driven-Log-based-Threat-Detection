@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { toastSuccess, toastError } from '../utils/toastHelpers.jsx'
+import { toastSuccess, toastError, toastConfirmAction } from '../utils/toastHelpers.jsx'
 import {
     Activity, Shield, ShieldAlert, Zap, Clock,
     ArrowRight, Terminal, Search, Trash2,
@@ -153,22 +153,27 @@ export default function LiveTraffic() {
     }, [])
 
 
-    const clearLogs = async () => {
-        if (!window.confirm("Are you sure you want to clear all log history?")) return
-        
-        try {
-            await fetch(`${API}/realtime/clear`, { method: 'POST' })
-            setLogs([])
-            setThreatCount(0)
-            setTotalEvents(0)
-            threatCounterRef.current = 0
-            logCounterRef.current = 0
-            setCurrentPage(1)
-            localStorage.removeItem(STORAGE_KEY)
-            toastSuccess('Logs Cleared', 'Historical traffic data purged from system')
-        } catch (e) {
-            toastError('Clear Failed', 'Could not purge backend logs')
-        }
+    const clearLogs = () => {
+        toastConfirmAction(
+            "Clear Log History",
+            "Are you sure you want to permanently delete all historical live traffic logs?",
+            "Clear History",
+            async () => {
+                try {
+                    await fetch(`${API}/realtime/clear`, { method: 'POST' })
+                    setLogs([])
+                    setThreatCount(0)
+                    setTotalEvents(0)
+                    threatCounterRef.current = 0
+                    logCounterRef.current = 0
+                    setCurrentPage(1)
+                    localStorage.removeItem(STORAGE_KEY)
+                    toastSuccess('Logs Cleared', 'Historical traffic data purged from system')
+                } catch (e) {
+                    toastError('Clear Failed', 'Could not purge backend logs')
+                }
+            }
+        )
     }
 
     // Page navigation
