@@ -127,3 +127,9 @@
 {"timestamp": "2026-04-08T15:16:18.657944", "sample_index": 8947, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "DOS", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 7634.17}
 {"timestamp": "2026-04-08T15:16:47.420372", "sample_index": 8947, "method": "hybrid-correlated", "decision": "ATTACK", "prediction": "DOS", "confidence": 100.0, "rule_hits_count": 1, "total_time_ms": 4072.22}
 {"timestamp": "2026-04-08T15:28:37.730121", "sample_index": 37690, "method": "hybrid-correlated", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 880.97}
+{"timestamp": "2026-04-08T17:46:39.750873", "sample_index": 26736, "method": "ml-rule-hybrid", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 2031.89}
+{"timestamp": "2026-04-08T17:46:50.826251", "sample_index": 26736, "method": "ml-rule-hybrid", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 197.65}
+{"timestamp": "2026-04-08T17:46:55.741269", "sample_index": 11597, "method": "ml-rule-hybrid", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 95.0, "rule_hits_count": 72, "total_time_ms": 252.1}
+{"timestamp": "2026-04-08T17:47:02.090951", "sample_index": 36481, "method": "ml-rule-hybrid", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 286.75}
+{"timestamp": "2026-04-08T17:47:06.064251", "sample_index": 69823, "method": "ml-rule-hybrid", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.24, "rule_hits_count": 0, "total_time_ms": 278.71}
+{"timestamp": "2026-04-08T17:47:09.918248", "sample_index": 1337, "method": "ml-rule-hybrid", "decision": "ATTACK", "prediction": "EXPLOITS", "confidence": 95.0, "rule_hits_count": 61, "total_time_ms": 181.62}

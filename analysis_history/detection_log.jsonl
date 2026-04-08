@@ -81,3 +81,5 @@
 {"timestamp": "2026-04-06T20:24:03.288557", "sample_index": 77300, "attack_type": "Recon/Scanning", "method": "hybrid-correlated", "rules_matched": 0}
 {"timestamp": "2026-04-08T15:16:18.657944", "sample_index": 8947, "attack_type": "DOS", "method": "hybrid-correlated", "rules_matched": 1}
 {"timestamp": "2026-04-08T15:16:47.420372", "sample_index": 8947, "attack_type": "DOS", "method": "hybrid-correlated", "rules_matched": 1}
+{"timestamp": "2026-04-08T17:46:55.741269", "sample_index": 11597, "attack_type": "EXPLOITS", "method": "ml-rule-hybrid", "rules_matched": 72}
+{"timestamp": "2026-04-08T17:47:09.918248", "sample_index": 1337, "attack_type": "EXPLOITS", "method": "ml-rule-hybrid", "rules_matched": 61}

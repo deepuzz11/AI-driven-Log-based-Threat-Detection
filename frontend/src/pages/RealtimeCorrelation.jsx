@@ -17,6 +17,7 @@ export default function RealtimeCorrelation() {
     const [recentLogs, setRecentLogs] = useState([])
     const [threatHistory, setThreatHistory] = useState([])
     const [autoLearnedRules, setAutoLearnedRules] = useState([])
+    const [activeTab, setActiveTab] = useState('stream')
     const eventSourceRef = useRef(null)
     const logCounterRef = useRef(0)
 
@@ -108,6 +109,7 @@ export default function RealtimeCorrelation() {
 
             const data = await response.json()
             setCorrelationData(data)
+            setActiveTab('analysis')
 
             // Show newly learned rules
             if (data.auto_learned_rules && data.auto_learned_rules.length > 0) {
@@ -252,182 +254,205 @@ export default function RealtimeCorrelation() {
                     </div>
                 </div>
 
-                {/* Auto-Learned Rules */}
-                {autoLearnedRules.length > 0 && (
-                    <div className="card auto-learned-panel fade-in">
-                        <div className="card-header">
-                            <Zap size={16} style={{ marginRight: '6px' }} />
-                            Recently Auto-Learned Rules
-                        </div>
-                        <div className="card-body">
-                            <div className="rules-timeline">
-                                {autoLearnedRules.map((rule, idx) => (
-                                    <div key={idx} className="rule-timeline-item">
-                                        <div className="rule-time-marker"></div>
-                                        <div className="rule-content">
-                                            <div className="rule-header">
-                                                <span className="rule-name">{rule.rule_name}</span>
-                                                <span className="rule-source">{rule.source}</span>
-                                            </div>
-                                            <div className="rule-meta">
-                                                Category: <strong>{rule.category}</strong>
-                                            </div>
-                                            <div className="rule-pattern" title={rule.pattern}>
-                                                {(rule.pattern || "").substring(0, 80)}
-                                                {(rule.pattern || "").length > 80 ? '...' : ''}
+                <div className="tabs-container" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div className="tab-list">
+                        <button className={`tab-item ${activeTab === 'stream' ? 'active' : ''}`} onClick={() => setActiveTab('stream')}>Live Stream & History</button>
+                        <button className={`tab-item ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}>Correlation Results</button>
+                    </div>
+
+                    <div className="tab-content">
+                        {activeTab === 'stream' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {/* Auto-Learned Rules */}
+                                {autoLearnedRules.length > 0 && (
+                                    <div className="card auto-learned-panel fade-in">
+                                        <div className="card-header">
+                                            <Zap size={16} style={{ marginRight: '6px' }} />
+                                            Recently Auto-Learned Rules
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="rules-timeline">
+                                                {autoLearnedRules.map((rule, idx) => (
+                                                    <div key={idx} className="rule-timeline-item">
+                                                        <div className="rule-time-marker"></div>
+                                                        <div className="rule-content">
+                                                            <div className="rule-header">
+                                                                <span className="rule-name">{rule.rule_name}</span>
+                                                                <span className="rule-source">{rule.source}</span>
+                                                            </div>
+                                                            <div className="rule-meta">
+                                                                Category: <strong>{rule.category}</strong>
+                                                            </div>
+                                                            <div className="rule-pattern" title={rule.pattern}>
+                                                                {(rule.pattern || "").substring(0, 80)}
+                                                                {(rule.pattern || "").length > 80 ? '...' : ''}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                                )}
 
-                {/* Threat History */}
-                {threatHistory.length > 0 && (
-                    <div className="card threat-history-panel">
-                        <div className="card-header">
-                            <BarChart3 size={16} style={{ marginRight: '6px' }} />
-                            Threat Detection Timeline
-                        </div>
-                        <div className="card-body">
-                            <div className="threat-timeline">
-                                {threatHistory.map((threat, idx) => (
-                                    <div key={idx} className="threat-entry">
-                                        <span className="threat-time">{threat.timestamp}</span>
-                                        <span className="threat-log">Log #{threat.count}</span>
-                                        <span className="threat-prediction">{threat.prediction}</span>
-                                        <span className="threat-confidence">
-                                            {threat.confidence}%
-                                        </span>
+                                {/* Threat History */}
+                                {threatHistory.length > 0 && (
+                                    <div className="card threat-history-panel">
+                                        <div className="card-header">
+                                            <BarChart3 size={16} style={{ marginRight: '6px' }} />
+                                            Threat Detection Timeline
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="threat-timeline">
+                                                {threatHistory.map((threat, idx) => (
+                                                    <div key={idx} className="threat-entry">
+                                                        <span className="threat-time">{threat.timestamp}</span>
+                                                        <span className="threat-log">Log #{threat.count}</span>
+                                                        <span className="threat-prediction">{threat.prediction}</span>
+                                                        <span className="threat-confidence">
+                                                            {threat.confidence}%
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                                )}
 
-                {/* Recent Logs Stream */}
-                {recentLogs.length > 0 && (
-                    <div className="card realtime-logs-panel">
-                        <div className="card-header">
-                            <RefreshCw size={16} style={{ marginRight: '6px' }} />
-                            Last 20 Logs
-                        </div>
-                        <div className="card-body">
-                            <div className="logs-grid">
-                                {recentLogs.map((log, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`log-item ${log.analysis.decision === 'ATTACK' ? 'attack' : 'benign'}`}
-                                    >
-                                        <div className="log-number">#{log.count}</div>
-                                        <div className="log-prediction">{log.analysis.prediction}</div>
-                                        <div className="log-time">{log.timestamp}</div>
+                                {/* Recent Logs Stream */}
+                                {recentLogs.length > 0 && (
+                                    <div className="card realtime-logs-panel">
+                                        <div className="card-header">
+                                            <RefreshCw size={16} style={{ marginRight: '6px' }} />
+                                            Last 20 Logs
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="logs-grid">
+                                                {recentLogs.map((log, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={`log-item ${log.analysis.decision === 'ATTACK' ? 'attack' : 'benign'}`}
+                                                    >
+                                                        <div className="log-number">#{log.count}</div>
+                                                        <div className="log-prediction">{log.analysis.prediction}</div>
+                                                        <div className="log-time">{log.timestamp}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                                )}
 
-                {/* Correlation Results */}
-                {correlationData && (
-                    <div className="results-section fade-in">
-                        {/* Executive Summary Section (NLP Powered) */}
-                        <div className="card summary-card" style={{ 
-                            marginBottom: '24px', 
-                            borderLeft: '4px solid var(--accent-purple)',
-                            background: 'rgba(15, 23, 42, 0.4)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.05)',
-                            overflow: 'hidden',
-                            position: 'relative'
-                        }}>
-                            {/* Terminal Scanline Effect */}
-                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02))', backgroundSize: '100% 4px, 3px 100%', pointerEvents: 'none', opacity: 0.3 }} />
-                            
-                            <div className="card-header" style={{ 
-                                background: 'rgba(59, 130, 246, 0.15)', 
-                                color: '#60a5fa', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                gap: '8px', 
-                                fontSize: '11px', 
-                                fontWeight: 800,
-                                letterSpacing: '0.1em',
-                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                padding: '10px 20px',
-                                textTransform: 'uppercase'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Search size={14} /> NEURAL SEQUENCE AUDIT: LAST {(correlationData?.correlation_stats?.benign_entries || 0) + (correlationData?.correlation_stats?.attacks_detected || 0) || (correlationData?.sequence_logs?.length || 10)} EVENTS
-                                </div>
-                                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>[ ENGINE: BART-DISTIL-CNN ]</div>
-                            </div>
-                            <div className="card-body" style={{ padding: '24px 24px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                    <div style={{ 
-                                        color: 'var(--accent-pink)', 
-                                        fontWeight: 900, 
-                                        fontSize: '12px', 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '6px',
-                                        background: 'rgba(236, 72, 153, 0.15)',
-                                        padding: '4px 10px',
-                                        borderRadius: '4px',
-                                        letterSpacing: '0.05em'
-                                    }}>
-                                        <RefreshCw size={14} /> EXECUTIVE SUMMARY
+                                {/* Empty State for Stream Tab */}
+                                {!isRunning && recentLogs.length === 0 && (
+                                    <div className="empty-state">
+                                        <div className="empty-icon">
+                                            <Zap size={48} />
+                                        </div>
+                                        <h3>Start Real-Time Monitoring</h3>
+                                        <p>Click "Start Streaming" to begin generating and analyzing logs in real-time</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
+                                            The system will automatically learn new rules from high-confidence attacks
+                                        </p>
                                     </div>
-                                    <div style={{ height: '1px', flexGrow: 1, background: 'linear-gradient(90deg, rgba(236, 72, 153, 0.3), transparent)' }}></div>
-                                </div>
-                                <div style={{ 
-                                    fontSize: '16px', 
-                                    lineHeight: '1.8', 
-                                    color: 'rgba(255,255,255,0.95)', 
-                                    fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
-                                    paddingRight: '20px'
-                                }}>
-                                    {Array.isArray(correlationData.summary) ? correlationData.summary[0] : correlationData.summary}
-                                </div>
+                                )}
                             </div>
-                        </div>
+                        )}
 
-                        <CorrelationInsights
-                            explainability={correlationData.explainability}
-                            correlationStats={correlationData.correlation_stats}
-                            ruleHits={correlationData.all_rule_hits}
-                        />
+                        {activeTab === 'analysis' && (
+                            <div className="results-section fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {correlationData ? (
+                                    <>
+                                        {/* Executive Summary Section (NLP Powered) */}
+                                        <div className="card summary-card" style={{ 
+                                            borderLeft: '4px solid var(--accent-purple)',
+                                            background: 'rgba(15, 23, 42, 0.4)',
+                                            backdropFilter: 'blur(10px)',
+                                            border: '1px solid rgba(255,255,255,0.05)',
+                                            overflow: 'hidden',
+                                            position: 'relative'
+                                        }}>
+                                            {/* Terminal Scanline Effect */}
+                                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02))', backgroundSize: '100% 4px, 3px 100%', pointerEvents: 'none', opacity: 0.3 }} />
+                                            
+                                            <div className="card-header" style={{ 
+                                                background: 'rgba(59, 130, 246, 0.15)', 
+                                                color: '#60a5fa', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'space-between',
+                                                gap: '8px', 
+                                                fontSize: '11px', 
+                                                fontWeight: 800,
+                                                letterSpacing: '0.1em',
+                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                                padding: '10px 20px',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Search size={14} /> NEURAL SEQUENCE AUDIT: LAST {(correlationData?.correlation_stats?.benign_entries || 0) + (correlationData?.correlation_stats?.attacks_detected || 0) || (correlationData?.sequence_logs?.length || 10)} EVENTS
+                                                </div>
+                                                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>[ ENGINE: BART-DISTIL-CNN ]</div>
+                                            </div>
+                                            <div className="card-body" style={{ padding: '24px 24px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                                    <div style={{ 
+                                                        color: 'var(--accent-pink)', 
+                                                        fontWeight: 900, 
+                                                        fontSize: '12px', 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        gap: '6px',
+                                                        background: 'rgba(236, 72, 153, 0.15)',
+                                                        padding: '4px 10px',
+                                                        borderRadius: '4px',
+                                                        letterSpacing: '0.05em'
+                                                    }}>
+                                                        <RefreshCw size={14} /> EXECUTIVE SUMMARY
+                                                    </div>
+                                                    <div style={{ height: '1px', flexGrow: 1, background: 'linear-gradient(90deg, rgba(236, 72, 153, 0.3), transparent)' }}></div>
+                                                </div>
+                                                <div style={{ 
+                                                    fontSize: '16px', 
+                                                    lineHeight: '1.8', 
+                                                    color: 'rgba(255,255,255,0.95)', 
+                                                    fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
+                                                    paddingRight: '20px'
+                                                }}>
+                                                    {Array.isArray(correlationData.summary) ? correlationData.summary[0] : correlationData.summary}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                        <SequenceExplainability
-                            explainability={correlationData.explainability}
-                            correlationStats={correlationData.correlation_stats}
-                        />
+                                        <CorrelationInsights
+                                            explainability={correlationData.explainability}
+                                            correlationStats={correlationData.correlation_stats}
+                                            ruleHits={correlationData.all_rule_hits}
+                                        />
 
-                        <SequenceViewer
-                            sequenceLogs={correlationData.sequence_logs}
-                            explainability={correlationData.explainability}
-                        />
+                                        <SequenceExplainability
+                                            explainability={correlationData.explainability}
+                                            correlationStats={correlationData.correlation_stats}
+                                        />
+
+                                        <SequenceViewer
+                                            sequenceLogs={correlationData.sequence_logs}
+                                            explainability={correlationData.explainability}
+                                        />
+                                    </>
+                                ) : (
+                                    <div className="empty-state">
+                                        <div className="empty-icon">
+                                            <TrendingUp size={48} />
+                                        </div>
+                                        <h3>No Correlation Data</h3>
+                                        <p>Click "Analyze Correlation" while streaming to generate deep sequence insights.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
-                )}
-
-                {/* Empty State */}
-                {!isRunning && !correlationData && (
-                    <div className="empty-state">
-                        <div className="empty-icon">
-                            <Zap size={48} />
-                        </div>
-                        <h3>Start Real-Time Monitoring</h3>
-                        <p>Click "Start Streaming" to begin generating and analyzing logs in real-time</p>
-                        <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
-                            The system will automatically learn new rules from high-confidence attacks
-                        </p>
-                    </div>
-                )}
+                </div>
             </div>
         </div>
     )

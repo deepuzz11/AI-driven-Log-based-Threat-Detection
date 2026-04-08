@@ -15,6 +15,7 @@ export default function CorrelationAnalysis() {
     const [analyzing, setAnalyzing] = useState(false)
     const [correlationData, setCorrelationData] = useState(null)
     const [advancedOpen, setAdvancedOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState('insights')
 
     const runCorrelationAnalysis = useCallback(async () => {
         if (!startIndex) {
@@ -200,25 +201,36 @@ export default function CorrelationAnalysis() {
 
                 {/* Results Section */}
                 {correlationData && (
-                    <div className="results-section fade-in">
-                        {/* Correlation Insights */}
-                        <CorrelationInsights
-                            explainability={correlationData.explainability}
-                            correlationStats={correlationData.correlation_stats}
-                            ruleHits={correlationData.all_rule_hits}
-                        />
+                    <div className="results-section fade-in tabs-container">
+                        <div className="tab-list">
+                            <button className={`tab-item ${activeTab === 'insights' ? 'active' : ''}`} onClick={() => setActiveTab('insights')}>Correlation Insights</button>
+                            <button className={`tab-item ${activeTab === 'explainability' ? 'active' : ''}`} onClick={() => setActiveTab('explainability')}>Sequence Explainability</button>
+                            <button className={`tab-item ${activeTab === 'sequence' ? 'active' : ''}`} onClick={() => setActiveTab('sequence')}>Sequence Viewer</button>
+                        </div>
 
-                        {/* Sequence Explainability */}
-                        <SequenceExplainability
-                            explainability={correlationData.explainability}
-                            correlationStats={correlationData.correlation_stats}
-                        />
+                        <div className="tab-content">
+                            {activeTab === 'insights' && (
+                                <CorrelationInsights
+                                    explainability={correlationData.explainability}
+                                    correlationStats={correlationData.correlation_stats}
+                                    ruleHits={correlationData.all_rule_hits}
+                                />
+                            )}
 
-                        {/* Sequence Viewer */}
-                        <SequenceViewer
-                            sequenceLogs={correlationData.sequence_logs}
-                            explainability={correlationData.explainability}
-                        />
+                            {activeTab === 'explainability' && (
+                                <SequenceExplainability
+                                    explainability={correlationData.explainability}
+                                    correlationStats={correlationData.correlation_stats}
+                                />
+                            )}
+
+                            {activeTab === 'sequence' && (
+                                <SequenceViewer
+                                    sequenceLogs={correlationData.sequence_logs}
+                                    explainability={correlationData.explainability}
+                                />
+                            )}
+                        </div>
                     </div>
                 )}
 
