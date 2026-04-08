@@ -267,18 +267,6 @@ def build_log_string(row):
     text_parts.append(f"bytes:{sbytes},{dbytes}")
     text_parts.append(f"pkts:{spkts},{dpkts}")
     
-    # 3. Ground-Truth Descriptors (for legacy category rules)
-    matched = False
-    for key, (category_kw, description) in ATTACK_CATEGORY_MAP.items():
-        if key.lower() == attack_cat.lower():
-            text_parts.append(description.lower())
-            text_parts.append(category_kw)
-            matched = True
-            break
-    
-    if not matched and attack_cat.lower() not in ["normal", "benign", "none", ""]:
-        text_parts.append(f"{attack_cat.lower()} attack detected")
-    
     if attack_cat.lower() in ["normal", "benign", "none"]:
         text_parts.append("benign")
         text_parts.append("normal")
@@ -549,16 +537,20 @@ def perform_analysis(row):
     if is_attack_rule or is_attack_ml:
         decision = "ATTACK"
     
-    # Prediction: Prioritize rule if hit, else ML
+    # Prediction: ML engine ALWAYS defines the category for consistency
     prediction = pred_ml
-    if is_attack_rule:
-        prediction = rule_hits[0]["category"].upper()
     
+    # Final confidence fusion
     final_conf = conf_ml if conf_ml is not None else 0.0
     if is_attack_rule:
-        final_conf = max(final_conf, 95.0) # Rules are high confidence
+        final_conf = max(final_conf, 98.0) # Rules provide near-certainty
 
     total_time = time.perf_counter() - total_start
+
+    # Sanitize row to remove Ground Truth fields (attack_cat, label)
+    sanitized_row = row.copy()
+    sanitized_row.pop("attack_cat", None)
+    sanitized_row.pop("label", None)
 
     return {
         "method": "ml-rule-hybrid",
@@ -577,9 +569,8 @@ def perform_analysis(row):
         "total_time_ms": round(total_time * 1000, 2),
         "confidence": round(final_conf, 2),
         "feature_importance": feat_imp or [],
-        "ground_truth": row.get("attack_cat", ""),
         "raw_log": build_log_string_industry(row),
-        "row": row,
+        "row": sanitized_row,
         "auto_rule_added": auto_rule_added,
         "new_rule_name": new_rule_name if auto_rule_added else None,
         "detection_source": "RULE" if is_attack_rule else "ML" if is_attack_ml else "NONE"
@@ -1043,14 +1034,22 @@ def get_analytics():
     """Get analytics data matching backend statistics"""
     from collections import Counter
     
-    # Calculate attack statistics
+    # Calculate attack statistics using ML engine for all records
+    # We run ML on a 10k sample for performance, or use the pre-calculated ml_prediction
+    if "ml_prediction" not in TEST_DF.columns:
+        print("[API] Running ML engine on analysis records...")
+        _X = TEST_DF.reindex(columns=ml_model.feature_names_in_, fill_value=0)
+        pred_encs = ml_model.predict(_X)
+        TEST_DF["ml_prediction"] = label_encoder.inverse_transform(pred_encs)
+        TEST_DF["ml_label"] = TEST_DF["ml_prediction"].apply(lambda x: 1 if x.lower() not in ["normal", "benign"] else 0)
+
     total_logs = len(TEST_DF)
-    attack_logs = TEST_DF[TEST_DF["label"] == 1]
+    attack_logs = TEST_DF[TEST_DF["ml_label"] == 1]
     attack_count = len(attack_logs)
     benign_count = total_logs - attack_count
     
-    # Attack type breakdown
-    attack_cats = Counter(TEST_DF["attack_cat"].tolist())
+    # Attack type breakdown (ML-derived)
+    attack_cats = Counter(TEST_DF["ml_prediction"].tolist())
     
     # Calculate percentages
     normal_traffic_pct = (benign_count * 100) // total_logs if total_logs > 0 else 0
@@ -1066,14 +1065,14 @@ def get_analytics():
     
     # Ensure we have at least Normal Traffic
     if len(distribution_data) < 6:
-        distribution_labels.insert(0, "Normal Traffic")
+        distribution_labels.insert(0, "Benign Activity")
         distribution_data.insert(0, normal_traffic_pct)
     
-    # Attack frequency (last 7 days - simulated by grouping)
+    # Attack frequency (ML-derived)
     attack_vectors = {}
-    for cat in TEST_DF["attack_cat"].unique():
+    for cat in TEST_DF["ml_prediction"].unique():
         if cat and cat.lower() not in ["normal", "benign"]:
-            count = (TEST_DF["attack_cat"] == cat).sum()
+            count = (TEST_DF["ml_prediction"] == cat).sum()
             attack_vectors[cat] = int(count)
     
     # Sort by frequency

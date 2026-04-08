@@ -10,27 +10,28 @@ function PipelineTracker({ state, result }) {
 
     const getStepClass = (key) => {
         if (state === 'idle') return ''
-        if (state === 'step1' && key === 'rule') return 'active'
-        if (state === 'step2' && key === 'ml') return 'active'
         
-        if (state === 'rule-hit' || (result && result.rule_hits && result.rule_hits.length > 0)) {
-            if (key === 'rule') return 'hit'
-            if (state === 'rule-hit') {
-                if (key === 'ml') return 'skip'
-                if (key === 'out') return 'hit'
-            }
+        // Rule Engine Logic
+        if (key === 'rule') {
+            if (result && result.rule_hits && result.rule_hits.length > 0) return 'hit'
+            if (state === 'step1') return 'active'
+            if (state === 'step2' || state === 'ml-attack' || state === 'ml-benign') return 'pass'
+        }
+
+        // ML Engine Logic
+        if (key === 'ml') {
+            if (state === 'step2') return 'active'
+            if (state === 'rule-hit') return 'active'
+            if (state === 'ml-attack') return 'hit'
+            if (state === 'ml-benign') return 'pass'
+        }
+
+        // Output Logic
+        if (key === 'out') {
+            if (state === 'ml-attack' || ((state === 'step2' || state === 'ml-attack' || state === 'ml-benign') && result?.rule_hits?.length > 0)) return 'hit'
+            if (state === 'ml-benign') return 'pass'
         }
         
-        if (state === 'ml-attack') {
-            if (key === 'ml') return 'hit'
-            if (key === 'out') return 'hit'
-        }
-        if (state === 'ml-benign') {
-            if (key === 'ml') return 'pass'
-            if (key === 'out') return 'pass'
-        }
-        
-        if (key === 'rule' && (state === 'step2' || state === 'ml-attack' || state === 'ml-benign')) return 'pass'
         return ''
     }
 
@@ -48,9 +49,8 @@ function PipelineTracker({ state, result }) {
 
         // ML Engine Check
         if (key === 'ml') {
-            if (state === 'step1') return 'READY'
+            if (state === 'rule-hit') return '🔄 ANALYZING...'
             if (state === 'step2') return 'ELABORATING...'
-            if (state === 'rule-hit') return '⏭ SKIPPED'
             if (state === 'ml-attack') return '✕ ATTACK MATCH'
             if (state === 'ml-benign') return '✓ BENIGN'
             return 'READY'

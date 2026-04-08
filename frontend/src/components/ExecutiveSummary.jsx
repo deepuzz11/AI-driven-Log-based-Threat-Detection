@@ -91,12 +91,6 @@ export default function ExecutiveSummary({ result }) {
                         Analysis Method: <strong style={{ color: 'var(--text-primary)' }}>{result.method}</strong>
                     </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Info size={14} color="var(--accent-purple)" />
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        Ground Truth: <strong style={{ color: 'var(--text-primary)' }}>{result.ground_truth || 'Unknown'}</strong>
-                    </span>
-                </div>
             </div>
         </div>
     );

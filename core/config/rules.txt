@@ -1,16 +1,5 @@
-# CATEGORY-BASED DETECTION - Matches high-level attack categories from dataset
-# These rules will trigger when attack_cat field is detected
-("category_generic", r"\b(generic attack detected|generic)\b", "generic"),
-("category_exploits", r"\b(exploitation attack detected|exploits|vulnerability|exploit|cve|injection)\b", "exploits"),
-("category_fuzzers", r"\b(fuzzing attack detected|fuzzers)\b", "fuzzers"),
-("category_dos", r"\b(dos/ddos attack detected|dos|ddos)\b", "dos"),
-("category_recon", r"\b(reconnaissance attack detected|recon)\b", "recon"),
-("category_shellcode", r"\b(shellcode injection detected|shellcode)\b", "shellcode"),
-("category_worms", r"\b(worm/malware detected|worms)\b", "worms"),
-("category_backdoor", r"\b(backdoor access detected|backdoor)\b", "backdoor"),
-("category_analysis", r"\b(network analysis attack detected|analysis)\b", "analysis"),
-("category_intrusion", r"\b(intrusion detected|intrusion)\b", "intrusion"),
-("category_anomaly", r"\b(anomalous behavior detected|anomaly)\b", "anomaly"),
+# SIGNATURE-BASED DETECTION - Matches technical markers and known patterns
+
 
 # DOS / DDoS / flooding / connection spam families
     ("dos_syn_flood", r"\b(SYN[- ]?flood|syn flood|SYN-FLOOD)\b", "dos"),
@@ -258,3 +247,4 @@
 # Rules below are automatically appended when ML detects attacks
 # that existing rules miss. DO NOT manually edit this section.
 # ─────────────────────────────────────────────────────────────("auto_recon_scanning_56261", r"proto:tcp.*service:ftp.*state:fin", "Recon/Scanning"),
+("auto_recon_scanning_57399", r"proto:tcp.*state:fin", "Recon/Scanning"),

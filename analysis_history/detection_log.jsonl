@@ -110,3 +110,25 @@
 {"timestamp": "2026-04-08T19:04:20.775541", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
 {"timestamp": "2026-04-08T19:04:22.911925", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
 {"timestamp": "2026-04-08T19:08:36.004484", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:35:54.523329", "sample_index": 2755, "attack_type": "EXPLOITS", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:39:13.462737", "sample_index": 9352, "attack_type": "EXPLOITS", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:39:21.875466", "sample_index": 57531, "attack_type": "GENERIC", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:39:42.607623", "sample_index": 57531, "attack_type": "GENERIC", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:39:47.403771", "sample_index": 57531, "attack_type": "GENERIC", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:40:00.318519", "sample_index": 77248, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:40:16.857541", "sample_index": 59609, "attack_type": "DOS", "method": "ml-rule-hybrid", "rules_matched": 2}
+{"timestamp": "2026-04-08T19:40:42.802011", "sample_index": 34201, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:40:57.542489", "sample_index": 38647, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 2}
+{"timestamp": "2026-04-08T19:41:11.812507", "sample_index": 81036, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:41:26.497289", "sample_index": 81978, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:48:15.505771", "sample_index": 81978, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:48:34.612732", "sample_index": 33279, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:48:38.631986", "sample_index": 33279, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:48:56.865379", "sample_index": 33279, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:49:15.162316", "sample_index": 33279, "attack_type": "RECON/SCANNING", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:51:26.619122", "sample_index": 33279, "attack_type": "Benign", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:51:31.274731", "sample_index": 74329, "attack_type": "DoS/DDoS Attacks", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:52:48.146663", "sample_index": 74329, "attack_type": "DoS/DDoS Attacks", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:52:58.483257", "sample_index": 74329, "attack_type": "DoS/DDoS Attacks", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:53:03.473535", "sample_index": 74329, "attack_type": "DoS/DDoS Attacks", "method": "ml-rule-hybrid", "rules_matched": 1}
+{"timestamp": "2026-04-08T19:53:17.176070", "sample_index": 74329, "attack_type": "DoS/DDoS Attacks", "method": "ml-rule-hybrid", "rules_matched": 1}

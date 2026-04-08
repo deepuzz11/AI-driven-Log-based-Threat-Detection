@@ -120,14 +120,15 @@ export default function Dashboard() {
             const data = await r.json()
             setResult(data) // Inform the pipeline immediately
 
-            // Determine pipeline flow based on detection source
+            // Determine pipeline flow: ML engine now analyzes ALL records
             if (data.detection_source === 'RULE') {
-                setPipelineState('rule-hit')
-            } else {
-                setPipelineState('step2')
-                await new Promise(r => setTimeout(r, 150)) // Fast visual snap
-                setPipelineState(data.decision === 'ATTACK' ? 'ml-attack' : 'ml-benign')
+                setPipelineState('rule-hit') // Rule matches first
+                await new Promise(r => setTimeout(r, 500)) 
             }
+            
+            setPipelineState('step2') // Transition to ML for dual-verification
+            await new Promise(r => setTimeout(r, 300))
+            setPipelineState(data.decision === 'ATTACK' ? 'ml-attack' : 'ml-benign')
 
             // Notify if auto-rule was added
             if (data.auto_rule_added) {
