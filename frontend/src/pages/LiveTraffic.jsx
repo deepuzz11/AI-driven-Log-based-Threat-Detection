@@ -27,7 +27,7 @@ export default function LiveTraffic() {
     const [totalEvents, setTotalEvents] = useState(() => persisted.current?.totalEvents || 0)
     const [threatCount, setThreatCount] = useState(() => persisted.current?.threatCount || 0)
     const [eventRate, setEventRate] = useState('5')
-    const [isLoading, setIsLoading] = useState(false)
+
     const [currentPage, setCurrentPage] = useState(1)
 
     const logContainerRef = useRef(null)
@@ -49,7 +49,6 @@ export default function LiveTraffic() {
     const startScan = useCallback(async (isAutoConnect = false) => {
         if (isScanning && !isAutoConnect) return
         
-        if (!isAutoConnect) setIsLoading(true)
         try {
             const eps = parseInt(eventRate) || 5
             
@@ -104,8 +103,6 @@ export default function LiveTraffic() {
             }
             console.error(e)
             setIsScanning(false)
-        } finally {
-            if (!isAutoConnect) setIsLoading(false)
         }
     }, [eventRate, isScanning])
 
@@ -313,11 +310,8 @@ export default function LiveTraffic() {
                                 <button 
                                     className="btn-neo btn-neo-primary" 
                                     onClick={() => startScan(false)}
-                                    disabled={isLoading}
-                                    style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                                 >
-                                    {isLoading ? <Loader2 size={14} className="spinner" /> : <Play size={14} fill="currentColor" />}
-                                    {isLoading ? 'STARTING...' : 'START SCAN'}
+                                    <Play size={14} fill="currentColor" /> START SCAN
                                 </button>
                             ) : (
                                 <button className="btn-neo btn-neo-danger" onClick={stopScan}>
