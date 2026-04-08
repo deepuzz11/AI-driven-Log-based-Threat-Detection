@@ -248,3 +248,13 @@
 # that existing rules miss. DO NOT manually edit this section.
 # ─────────────────────────────────────────────────────────────("auto_recon_scanning_56261", r"proto:tcp.*service:ftp.*state:fin", "Recon/Scanning"),
 ("auto_recon_scanning_57399", r"proto:tcp.*state:fin", "Recon/Scanning"),
+("auto_dos_ddos_attacks_58834", r"proto:udp.*service:dns.*state:int", "DoS/DDoS Attacks"),
+("auto_dos_ddos_attacks_58838", r"proto:tlsp.*state:int", "DoS/DDoS Attacks"),
+("auto_recon_scanning_58857", r"proto:unas.*state:int", "Recon/Scanning"),
+("auto_dos_ddos_attacks_58859", r"proto:nsfnet\-igp.*state:int", "DoS/DDoS Attacks"),
+("auto_dos_ddos_attacks_58860", r"proto:ospf.*state:int", "DoS/DDoS Attacks"),
+("auto_recon_scanning_58861", r"proto:udp.*state:int", "Recon/Scanning"),
+("auto_dos_ddos_attacks_58876", r"proto:sccopmce.*state:int", "DoS/DDoS Attacks"),
+("auto_dos_ddos_attacks_58882", r"proto:mfe\-nsp.*state:int", "DoS/DDoS Attacks"),
+("auto_dos_ddos_attacks_58897", r"proto:stp.*state:int", "DoS/DDoS Attacks"),
+("auto_dos_ddos_attacks_58899", r"proto:smp.*state:int", "DoS/DDoS Attacks"),

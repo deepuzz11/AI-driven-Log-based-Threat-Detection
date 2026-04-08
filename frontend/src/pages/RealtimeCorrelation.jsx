@@ -69,6 +69,7 @@ export default function RealtimeCorrelation() {
 
     // Start real-time log generation
     const startRealtimeGeneration = useCallback(async () => {
+        if (isRunning) return
         try {
             const eps = parseInt(eventRate) || 5
             await fetch(`${API}/realtime/start?eps=${eps}`, { method: 'POST' })
@@ -127,17 +128,24 @@ export default function RealtimeCorrelation() {
 
     // Stop real-time generation
     const stopRealtimeGeneration = useCallback(async () => {
-        try {
-            await fetch(`${API}/realtime/stop`, { method: 'POST' })
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close()
-            }
-            setIsRunning(false)
-            toastSuccess('Stream Stopped', `Analyzed ${logCounterRef.current} events. History retained.`)
-        } catch (e) {
-            toastError('Stop Failed', 'Failed to stop real-time generation')
+        if (!isRunning) return
+        
+        setIsRunning(false)
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close()
+            eventSourceRef.current = null
         }
-    }, [])
+        
+        try {
+            const res = await fetch(`${API}/realtime/stop`, { method: 'POST' })
+            if (res.ok) {
+                toastSuccess('Stream Stopped', `Analyzed ${logCounterRef.current} events. History retained.`)
+            }
+        } catch (e) {
+            console.error('Correlation stop error:', e)
+            toastError('Backend Issue', 'Traffic stopped locally, but backend may still be active.')
+        }
+    }, [isRunning])
 
     // Analyze recent logs with correlation and auto-learning
     const analyzeRealtimeCorrelation = useCallback(async () => {

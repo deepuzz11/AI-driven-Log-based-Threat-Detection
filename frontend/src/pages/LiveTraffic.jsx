@@ -110,21 +110,28 @@ export default function LiveTraffic() {
 
     // Stop real-time log generation
     const stopScan = useCallback(async () => {
-        try {
-            await fetch(`${API}/realtime/stop`, { method: 'POST' })
-            
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close()
-            }
-            
-            setIsScanning(false)
-            autoPageRef.current = false
-            toastSuccess('Stream Stopped', `Analyzed ${logCounterRef.current} events successfully`)
-        } catch (e) {
-            toastError('Stop Failed', 'Could not terminate the live traffic stream')
-            console.error(e)
+        if (!isScanning) return
+        
+        // Update UI and close connection immediately for snappiness
+        setIsScanning(false)
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close()
+            eventSourceRef.current = null
         }
-    }, [])
+        
+        autoPageRef.current = false
+
+        try {
+            const res = await fetch(`${API}/realtime/stop`, { method: 'POST' })
+            if (res.ok) {
+                toastSuccess('Stream Stopped', `Analyzed ${logCounterRef.current} events successfully`)
+            }
+        } catch (e) {
+            // We don't revert isScanning to true here because the user intended to stop
+            console.error('Backend stop error:', e)
+            toastError('Backend Issue', 'Stream terminated locally, but backend may still be exiting.')
+        }
+    }, [isScanning])
 
     const handleNewLog = useCallback((analysis) => {
         logCounterRef.current += 1

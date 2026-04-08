@@ -374,7 +374,7 @@ class RealtimeGenerator:
     
     def start(self, eps=5, clear_log=False):
         """Start real-time log generation"""
-        if self.is_running:
+        if self.is_running or (self.thread and self.thread.is_alive()):
             return False
         
         self.event_rate = max(1, min(50, eps))
@@ -394,7 +394,8 @@ class RealtimeGenerator:
         """Stop real-time log generation"""
         self.is_running = False
         if self.thread:
-            self.thread.join(timeout=2)
+            # Short timeout to allow responding quickly to the user
+            self.thread.join(timeout=0.5)
         return True
 
 # Global log generator instance
