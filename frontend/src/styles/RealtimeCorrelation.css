@@ -383,3 +383,47 @@
         grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     }
 }
+
+/* ── Pagination Controls (Correlation Page) ── */
+.pg-btn-sm {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-secondary);
+    padding: 4px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', 'Monaco', monospace;
+    min-width: 26px;
+    height: 26px;
+}
+
+.pg-btn-sm:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+.pg-btn-sm:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.pg-btn-sm.pg-active-sm {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #60a5fa;
+    font-weight: 700;
+}
+
+.pg-btn-sm.pg-num-sm {
+    font-weight: 600;
+}
+
+.corr-pagination {
+    border-radius: 0 0 8px 8px;
+}

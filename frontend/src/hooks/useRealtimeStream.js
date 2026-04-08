@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { toastError } from '../utils/toastHelpers'
+import { toastError } from '../utils/toastHelpers.jsx'
 
 const API = '/api'
 

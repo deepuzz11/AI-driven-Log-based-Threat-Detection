@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { toast } from 'react-hot-toast'
-import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2, Search } from 'lucide-react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { toastSuccess, toastError } from '../utils/toastHelpers.jsx'
+import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import SequenceViewer from '../components/SequenceViewer'
 import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
 import '../styles/RealtimeCorrelation.css'
 
 const API = '/api'
+const LOGS_PER_PAGE = 40
+const THREATS_PER_PAGE = 20
 
 export default function RealtimeCorrelation() {
     const [isRunning, setIsRunning] = useState(false)
@@ -21,6 +23,39 @@ export default function RealtimeCorrelation() {
     const eventSourceRef = useRef(null)
     const logCounterRef = useRef(0)
 
+    // Pagination state
+    const [logsPage, setLogsPage] = useState(1)
+    const [threatsPage, setThreatsPage] = useState(1)
+
+    // Logs pagination
+    const totalLogsPages = useMemo(() => Math.max(1, Math.ceil(recentLogs.length / LOGS_PER_PAGE)), [recentLogs.length])
+    const paginatedLogs = useMemo(() => {
+        const start = (logsPage - 1) * LOGS_PER_PAGE
+        return recentLogs.slice(start, start + LOGS_PER_PAGE)
+    }, [recentLogs, logsPage])
+
+    // Threats pagination
+    const totalThreatsPages = useMemo(() => Math.max(1, Math.ceil(threatHistory.length / THREATS_PER_PAGE)), [threatHistory.length])
+    const paginatedThreats = useMemo(() => {
+        const start = (threatsPage - 1) * THREATS_PER_PAGE
+        return threatHistory.slice(start, start + THREATS_PER_PAGE)
+    }, [threatHistory, threatsPage])
+
+    // Page number generator
+    const getPageNumbers = (current, total) => {
+        const pages = []
+        const maxVisible = 5
+        let start = Math.max(1, current - Math.floor(maxVisible / 2))
+        let end = Math.min(total, start + maxVisible - 1)
+        if (end - start < maxVisible - 1) {
+            start = Math.max(1, end - maxVisible + 1)
+        }
+        for (let i = start; i <= end; i++) {
+            pages.push(i)
+        }
+        return pages
+    }
+
     // Start real-time log generation
     const startRealtimeGeneration = useCallback(async () => {
         try {
@@ -30,18 +65,10 @@ export default function RealtimeCorrelation() {
             logCounterRef.current = 0
             setRecentLogs([])
             setThreatHistory([])
+            setLogsPage(1)
+            setThreatsPage(1)
             
-            toast.custom((t) => (
-                <div className="custom-toast success slide-down">
-                    <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Stream Started</div>
-                        <div className="custom-toast-message">Real-time traffic started at {eps} EPS</div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                </div>
-            ), { duration: 3000 })
+            toastSuccess('Stream Started', `Real-time traffic started at ${eps} EPS`)
 
             // Connect to SSE stream
             if (eventSourceRef.current) {
@@ -56,16 +83,16 @@ export default function RealtimeCorrelation() {
                     logCounterRef.current += 1
                     setLogsCount(logCounterRef.current)
 
-                    // Keep last 20 logs in memory
-                    setRecentLogs(prev => [...prev.slice(-19), {
+                    // Retain ALL logs — no slicing
+                    setRecentLogs(prev => [...prev, {
                         count: logCounterRef.current,
                         analysis,
                         timestamp: new Date().toLocaleTimeString()
                     }])
 
-                    // Track threat events for history
+                    // Retain ALL threat events — no slicing
                     if (analysis.decision === 'ATTACK') {
-                        setThreatHistory(prev => [...prev.slice(-9), {
+                        setThreatHistory(prev => [...prev, {
                             count: logCounterRef.current,
                             prediction: analysis.prediction,
                             confidence: analysis.confidence,
@@ -80,31 +107,11 @@ export default function RealtimeCorrelation() {
             eventSourceRef.current.onerror = () => {
                 setIsRunning(false)
                 eventSourceRef.current?.close()
-                toast.custom((t) => (
-                    <div className="custom-toast error slide-down">
-                        <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                        <div className="custom-toast-content">
-                            <div className="custom-toast-title">Connection Lost</div>
-                            <div className="custom-toast-message">Stream connection lost</div>
-                        </div>
-                        <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                        <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                    </div>
-                ), { duration: 3000 })
+                toastError('Connection Lost', 'Stream connection lost')
             }
 
         } catch (e) {
-            toast.custom((t) => (
-                <div className="custom-toast error slide-down">
-                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Start Failed</div>
-                        <div className="custom-toast-message">Failed to start real-time generation</div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                </div>
-            ), { duration: 3000 })
+            toastError('Start Failed', 'Failed to start real-time generation')
             console.error(e)
         }
     }, [eventRate])
@@ -117,29 +124,9 @@ export default function RealtimeCorrelation() {
                 eventSourceRef.current.close()
             }
             setIsRunning(false)
-            toast.custom((t) => (
-                <div className="custom-toast success slide-down">
-                    <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Stream Stopped</div>
-                        <div className="custom-toast-message">Real-time log generation stopped</div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                </div>
-            ), { duration: 3000 })
+            toastSuccess('Stream Stopped', `Analyzed ${logCounterRef.current} events. History retained.`)
         } catch (e) {
-            toast.custom((t) => (
-                <div className="custom-toast error slide-down">
-                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Stop Failed</div>
-                        <div className="custom-toast-message">Failed to stop real-time generation</div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                </div>
-            ), { duration: 3000 })
+            toastError('Stop Failed', 'Failed to stop real-time generation')
         }
     }, [])
 
@@ -164,53 +151,19 @@ export default function RealtimeCorrelation() {
             // Show newly learned rules
             if (data.auto_learned_rules && data.auto_learned_rules.length > 0) {
                 setAutoLearnedRules(prev => [
-                    ...prev.slice(-(4)),
+                    ...prev,
                     ...data.auto_learned_rules
                 ])
 
-                toast.custom((t) => (
-                    <div className="custom-toast success slide-down">
-                        <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
-                        <div className="custom-toast-content">
-                            <div className="custom-toast-title">Rules Auto-Learned</div>
-                            <div className="custom-toast-message">
-                                {data.auto_learned_rules.length} new rules added to rules.txt
-                            </div>
-                        </div>
-                        <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                        <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                    </div>
-                ), { duration: 3000 })
+                toastSuccess('Rules Auto-Learned', `${data.auto_learned_rules.length} new rules added to rules.txt`)
             }
 
             const threatLevel = data?.explainability?.threat_level
             if (threatLevel && threatLevel !== 'NONE') {
-                toast.custom((t) => (
-                    <div className="custom-toast error slide-down">
-                        <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                        <div className="custom-toast-content">
-                            <div className="custom-toast-title">{threatLevel} Threat Detected</div>
-                            <div className="custom-toast-message">
-                                {data?.explainability?.attack_count || 0} malicious entries in stream
-                            </div>
-                        </div>
-                        <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                        <div className="custom-toast-progress" style={{ animationDuration: '4s' }} />
-                    </div>
-                ), { duration: 4000 })
+                toastError(`${threatLevel} Threat Detected`, `${data?.explainability?.attack_count || 0} malicious entries in stream`, 4000)
             }
         } catch (e) {
-            toast.custom((t) => (
-                <div className="custom-toast error slide-down">
-                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
-                    <div className="custom-toast-content">
-                        <div className="custom-toast-title">Analysis Failed</div>
-                        <div className="custom-toast-message">Correlation analysis failed</div>
-                    </div>
-                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
-                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
-                </div>
-            ), { duration: 3000 })
+            toastError('Analysis Failed', 'Correlation analysis failed')
             console.error(e)
         } finally {
             setIsAnalyzing(false)
@@ -225,6 +178,64 @@ export default function RealtimeCorrelation() {
             }
         }
     }, [])
+
+    // Auto-advance logs page to latest when streaming
+    useEffect(() => {
+        if (isRunning && recentLogs.length > 0) {
+            const newTotal = Math.max(1, Math.ceil(recentLogs.length / LOGS_PER_PAGE))
+            setLogsPage(newTotal) // Go to last page (latest logs)
+        }
+    }, [recentLogs.length, isRunning])
+
+    // Auto-advance threats page to latest when streaming
+    useEffect(() => {
+        if (isRunning && threatHistory.length > 0) {
+            const newTotal = Math.max(1, Math.ceil(threatHistory.length / THREATS_PER_PAGE))
+            setThreatsPage(newTotal)
+        }
+    }, [threatHistory.length, isRunning])
+
+    // Pagination component
+    const PaginationControls = ({ current, total, onPageChange, label }) => {
+        if (total <= 1) return null
+        return (
+            <div className="corr-pagination" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 16px',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(255,255,255,0.02)'
+            }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace" }}>
+                    Page {current} of {total} {label && `· ${label}`}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <button className="pg-btn-sm" onClick={() => onPageChange(1)} disabled={current === 1}>
+                        <ChevronsLeft size={12} />
+                    </button>
+                    <button className="pg-btn-sm" onClick={() => onPageChange(current - 1)} disabled={current === 1}>
+                        <ChevronLeft size={12} />
+                    </button>
+                    {getPageNumbers(current, total).map(page => (
+                        <button
+                            key={page}
+                            className={`pg-btn-sm pg-num-sm ${current === page ? 'pg-active-sm' : ''}`}
+                            onClick={() => onPageChange(page)}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button className="pg-btn-sm" onClick={() => onPageChange(current + 1)} disabled={current === total}>
+                        <ChevronRight size={12} />
+                    </button>
+                    <button className="pg-btn-sm" onClick={() => onPageChange(total)} disabled={current === total}>
+                        <ChevronsRight size={12} />
+                    </button>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="page realtime-correlation-page realtime-page">
@@ -328,7 +339,7 @@ export default function RealtimeCorrelation() {
                                     <div className="card auto-learned-panel fade-in">
                                         <div className="card-header">
                                             <Zap size={16} style={{ marginRight: '6px' }} />
-                                            Recently Auto-Learned Rules
+                                            Auto-Learned Rules ({autoLearnedRules.length} total)
                                         </div>
                                         <div className="card-body">
                                             <div className="rules-timeline">
@@ -355,16 +366,21 @@ export default function RealtimeCorrelation() {
                                     </div>
                                 )}
 
-                                {/* Threat History */}
+                                {/* Threat History with Pagination */}
                                 {threatHistory.length > 0 && (
                                     <div className="card threat-history-panel">
-                                        <div className="card-header">
-                                            <BarChart3 size={16} style={{ marginRight: '6px' }} />
-                                            Threat Detection Timeline
+                                        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center' }}>
+                                                <BarChart3 size={16} style={{ marginRight: '6px' }} />
+                                                Threat Detection Timeline
+                                            </span>
+                                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                {threatHistory.length} threats detected
+                                            </span>
                                         </div>
-                                        <div className="card-body">
-                                            <div className="threat-timeline">
-                                                {threatHistory.map((threat, idx) => (
+                                        <div className="card-body" style={{ padding: 0 }}>
+                                            <div className="threat-timeline" style={{ maxHeight: 'none', padding: '12px' }}>
+                                                {paginatedThreats.map((threat, idx) => (
                                                     <div key={idx} className="threat-entry">
                                                         <span className="threat-time">{threat.timestamp}</span>
                                                         <span className="threat-log">Log #{threat.count}</span>
@@ -375,20 +391,31 @@ export default function RealtimeCorrelation() {
                                                     </div>
                                                 ))}
                                             </div>
+                                            <PaginationControls
+                                                current={threatsPage}
+                                                total={totalThreatsPages}
+                                                onPageChange={setThreatsPage}
+                                                label={`${threatHistory.length} threats`}
+                                            />
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Recent Logs Stream */}
+                                {/* Recent Logs Stream with Pagination */}
                                 {recentLogs.length > 0 && (
                                     <div className="card realtime-logs-panel">
-                                        <div className="card-header">
-                                            <RefreshCw size={16} style={{ marginRight: '6px' }} />
-                                            Last 20 Logs
+                                        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center' }}>
+                                                <RefreshCw size={16} style={{ marginRight: '6px' }} />
+                                                All Streamed Logs
+                                            </span>
+                                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                {recentLogs.length} events captured
+                                            </span>
                                         </div>
-                                        <div className="card-body">
-                                            <div className="logs-grid">
-                                                {recentLogs.map((log, idx) => (
+                                        <div className="card-body" style={{ padding: 0 }}>
+                                            <div className="logs-grid" style={{ padding: '12px' }}>
+                                                {paginatedLogs.map((log, idx) => (
                                                     <div
                                                         key={idx}
                                                         className={`log-item ${log.analysis.decision === 'ATTACK' ? 'attack' : 'benign'}`}
@@ -399,6 +426,12 @@ export default function RealtimeCorrelation() {
                                                     </div>
                                                 ))}
                                             </div>
+                                            <PaginationControls
+                                                current={logsPage}
+                                                total={totalLogsPages}
+                                                onPageChange={setLogsPage}
+                                                label={`${recentLogs.length} events`}
+                                            />
                                         </div>
                                     </div>
                                 )}

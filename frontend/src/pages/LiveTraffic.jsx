@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { toast } from 'react-hot-toast'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { toastSuccess, toastError } from '../utils/toastHelpers.jsx'
 import {
     Activity, Shield, ShieldAlert, Zap, Clock,
     ArrowRight, Terminal, Search, Trash2,
-    Play, Square, AlertTriangle, ShieldCheck, Loader2, Network
+    Play, Square, AlertTriangle, ShieldCheck, Loader2, Network,
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react'
 
 const API = '/api'
+const LOGS_PER_PAGE = 50
 
 export default function LiveTraffic() {
     const [logs, setLogs] = useState([])
@@ -15,11 +17,22 @@ export default function LiveTraffic() {
     const [threatCount, setThreatCount] = useState(0)
     const [eventRate, setEventRate] = useState('5')
     const [isLoading, setIsLoading] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
 
     const logContainerRef = useRef(null)
     const eventSourceRef = useRef(null)
     const logCounterRef = useRef(0)
     const threatCounterRef = useRef(0)
+
+    // Pagination calculations
+    const totalPages = useMemo(() => Math.max(1, Math.ceil(logs.length / LOGS_PER_PAGE)), [logs.length])
+    const paginatedLogs = useMemo(() => {
+        const start = (currentPage - 1) * LOGS_PER_PAGE
+        return logs.slice(start, start + LOGS_PER_PAGE)
+    }, [logs, currentPage])
+
+    // Auto-go to page 1 when new logs arrive (newest first)
+    const autoPageRef = useRef(true)
 
     // Start real-time log generation
     const startScan = useCallback(async () => {
@@ -44,8 +57,10 @@ export default function LiveTraffic() {
             setTotalEvents(0)
             setThreatCount(0)
             setLogs([])
+            setCurrentPage(1)
+            autoPageRef.current = true
             
-            toast.success(`Live traffic started at ${eps} events/sec`)
+            toastSuccess('Stream Active', `Live traffic started at ${eps} events/sec`)
 
             // Connect to SSE stream
             if (eventSourceRef.current) {
@@ -67,11 +82,11 @@ export default function LiveTraffic() {
                 console.error("SSE connection error")
                 setIsScanning(false)
                 eventSourceRef.current?.close()
-                toast.error('Stream connection lost')
+                toastError('Connection Lost', 'SSE stream disconnected unexpectedly')
             }
 
         } catch (e) {
-            toast.error('Failed to start live traffic scan')
+            toastError('Start Failed', 'Could not initiate live traffic scan')
             console.error(e)
             setIsScanning(false)
         } finally {
@@ -89,9 +104,10 @@ export default function LiveTraffic() {
             }
             
             setIsScanning(false)
-            toast.success(`Live traffic stopped. Analyzed ${logCounterRef.current} events`)
+            autoPageRef.current = false
+            toastSuccess('Stream Stopped', `Analyzed ${logCounterRef.current} events successfully`)
         } catch (e) {
-            toast.error('Failed to stop live traffic')
+            toastError('Stop Failed', 'Could not terminate the live traffic stream')
             console.error(e)
         }
     }, [])
@@ -113,10 +129,13 @@ export default function LiveTraffic() {
             ...analysis
         }
 
-        setLogs(prev => {
-            const updated = [newLog, ...prev]
-            return updated.slice(0, 150) // Keep last 150
-        })
+        // Retain ALL logs — no slicing
+        setLogs(prev => [newLog, ...prev])
+
+        // Keep user on page 1 while streaming (newest first)
+        if (autoPageRef.current) {
+            setCurrentPage(1)
+        }
     }, [])
 
 
@@ -124,6 +143,13 @@ export default function LiveTraffic() {
         setLogs([])
         setThreatCount(0)
         threatCounterRef.current = 0
+        setCurrentPage(1)
+    }
+
+    // Page navigation
+    const goToPage = (page) => {
+        autoPageRef.current = false
+        setCurrentPage(Math.max(1, Math.min(page, totalPages)))
     }
 
     // Cleanup on unmount
@@ -134,6 +160,21 @@ export default function LiveTraffic() {
             }
         }
     }, [])
+
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pages = []
+        const maxVisible = 5
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+        let end = Math.min(totalPages, start + maxVisible - 1)
+        if (end - start < maxVisible - 1) {
+            start = Math.max(1, end - maxVisible + 1)
+        }
+        for (let i = start; i <= end; i++) {
+            pages.push(i)
+        }
+        return pages
+    }
 
     return (
         <div className="live-traffic-page live-monitor-page" style={{
@@ -268,7 +309,7 @@ export default function LiveTraffic() {
                     {/* Log Header */}
                     <div style={{
                         padding: '14px 24px',
-                        background: 'rgba(255,255,255,0.04)',
+                        background: 'rgba(255,255,255,0.06)',
                         borderBottom: '1px solid var(--border)',
                         display: 'grid',
                         gridTemplateColumns: '80px 90px 90px 140px 120px 1fr',
@@ -277,9 +318,7 @@ export default function LiveTraffic() {
                         fontWeight: 700,
                         color: 'var(--text-secondary)',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        background: 'rgba(255,255,255,0.06)',
-                        borderBottom: '1px solid var(--border)'
+                        letterSpacing: '0.05em'
                     }}>
                         <span>Event #</span>
                         <span>Verdict</span>
@@ -306,7 +345,7 @@ export default function LiveTraffic() {
                                 <p style={{ fontSize: '13px', opacity: 0.6 }}>Click "START SCAN" to begin real-time monitoring</p>
                             </div>
                         ) : (
-                            logs.map((log) => (
+                            paginatedLogs.map((log) => (
                                 <div key={log.id} style={{
                                     padding: '12px 24px',
                                     borderBottom: '1px solid rgba(255,255,255,0.03)',
@@ -382,6 +421,59 @@ export default function LiveTraffic() {
                             ))
                         )}
                     </div>
+
+                    {/* ── PAGINATION BAR ── */}
+                    {logs.length > LOGS_PER_PAGE && (
+                        <div className="pagination-bar" style={{
+                            padding: '12px 24px',
+                            borderTop: '1px solid var(--border)',
+                            background: 'rgba(255,255,255,0.03)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexShrink: 0
+                        }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontFamily: '"JetBrains Mono", monospace' }}>
+                                Showing {((currentPage - 1) * LOGS_PER_PAGE) + 1}–{Math.min(currentPage * LOGS_PER_PAGE, logs.length)} of {logs.length.toLocaleString()} events
+                            </span>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button className="pg-btn" onClick={() => goToPage(1)} disabled={currentPage === 1} title="First page">
+                                    <ChevronsLeft size={14} />
+                                </button>
+                                <button className="pg-btn" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} title="Previous page">
+                                    <ChevronLeft size={14} />
+                                </button>
+
+                                {getPageNumbers().map(page => (
+                                    <button
+                                        key={page}
+                                        className={`pg-btn pg-num ${currentPage === page ? 'pg-active' : ''}`}
+                                        onClick={() => goToPage(page)}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+
+                                <button className="pg-btn" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} title="Next page">
+                                    <ChevronRight size={14} />
+                                </button>
+                                <button className="pg-btn" onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} title="Last page">
+                                    <ChevronsRight size={14} />
+                                </button>
+                            </div>
+
+                            {isScanning && currentPage !== 1 && (
+                                <button
+                                    className="pg-btn pg-live"
+                                    onClick={() => { autoPageRef.current = true; setCurrentPage(1) }}
+                                >
+                                    ● LIVE
+                                </button>
+                            )}
+                            {(!isScanning || currentPage === 1) && <div style={{ width: '60px' }} />}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -527,6 +619,53 @@ export default function LiveTraffic() {
                     animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                 }
 
+                /* ── Pagination Styles ── */
+                .pg-btn {
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    color: var(--text-secondary);
+                    padding: 6px 8px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    font-size: 12px;
+                    font-family: 'JetBrains Mono', monospace;
+                    min-width: 32px;
+                    height: 32px;
+                }
+
+                .pg-btn:hover:not(:disabled) {
+                    background: rgba(255,255,255,0.1);
+                    border-color: rgba(255,255,255,0.2);
+                    color: #fff;
+                }
+
+                .pg-btn:disabled {
+                    opacity: 0.3;
+                    cursor: not-allowed;
+                }
+
+                .pg-btn.pg-active {
+                    background: rgba(59, 130, 246, 0.25);
+                    border-color: rgba(59, 130, 246, 0.5);
+                    color: #60a5fa;
+                    font-weight: 700;
+                }
+
+                .pg-btn.pg-live {
+                    background: rgba(16, 185, 129, 0.15);
+                    border-color: rgba(16, 185, 129, 0.4);
+                    color: var(--accent-green);
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 0.04em;
+                    padding: 6px 12px;
+                    animation: pulse 2s infinite;
+                }
+
                 @keyframes pulse {
                     0% { transform: scale(1); opacity: 1; }
                     50% { transform: scale(1.4); opacity: 0.5; }
@@ -547,4 +686,3 @@ export default function LiveTraffic() {
         </div>
     )
 }
-

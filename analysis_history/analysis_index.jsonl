@@ -153,3 +153,4 @@
 {"timestamp": "2026-04-08T18:16:48.502119", "sample_index": 78990, "method": "ml-rule-hybrid", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 64.44, "rule_hits_count": 0, "total_time_ms": 300.11}
 {"timestamp": "2026-04-08T18:18:50.175075", "sample_index": 78990, "method": "ml-rule-hybrid", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 64.44, "rule_hits_count": 0, "total_time_ms": 1100.96}
 {"timestamp": "2026-04-08T18:19:15.266427", "sample_index": 78990, "method": "ml-rule-hybrid", "decision": "ATTACK", "prediction": "Recon/Scanning", "confidence": 64.44, "rule_hits_count": 0, "total_time_ms": 2696.78}
+{"timestamp": "2026-04-08T18:40:58.451864", "sample_index": 37824, "method": "ml-rule-hybrid", "decision": "BENIGN", "prediction": "Benign", "confidence": 99.99, "rule_hits_count": 0, "total_time_ms": 57.23}
