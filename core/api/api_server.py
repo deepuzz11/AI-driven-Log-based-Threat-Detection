@@ -361,9 +361,10 @@ class RealtimeGenerator:
                            str(v) if pd.isna(v) else v)
                        for k, v in row.items()}
                 
-                # Write to log file
+                # Write to log file and flush immediately
                 with open(self.log_path, "a", encoding="utf-8") as f:
                     f.write(json.dumps(row) + "\n")
+                    f.flush() # Ensure it's hit the disk for SSE stream to pick up
                 
                 # Sleep based on event rate (EPS)
                 time.sleep(1.0 / self.event_rate)
@@ -374,10 +375,16 @@ class RealtimeGenerator:
     
     def start(self, eps=5, clear_log=False):
         """Start real-time log generation"""
-        if self.is_running or (self.thread and self.thread.is_alive()):
+        if self.is_running:
             return False
         
         self.event_rate = max(1, min(50, eps))
+        
+        # If thread is still alive but stopping, revive it
+        if self.thread and self.thread.is_alive():
+            self.is_running = True
+            return True
+        
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
         
         # Clear the log file only if explicitly requested
@@ -597,6 +604,8 @@ def stream_logs():
     def event_stream():
         log_path = os.path.join(BASE_DIR, "realtime_log_generator", "realtime_traffic.log")
 
+        # Ensure log directory and file exist
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
         if not os.path.exists(log_path):
             with open(log_path, "w") as f:
                 f.write("")
@@ -1037,20 +1046,13 @@ def get_analytics():
     
     # Calculate attack statistics using ML engine for all records
     # We run ML on a 10k sample for performance, or use the pre-calculated ml_prediction
-    if "ml_prediction" not in TEST_DF.columns:
-        print("[API] Running ML engine on analysis records...")
-        _X = TEST_DF.reindex(columns=ml_model.feature_names_in_, fill_value=0)
-        pred_encs = ml_model.predict(_X)
-        TEST_DF["ml_prediction"] = label_encoder.inverse_transform(pred_encs)
-        TEST_DF["ml_label"] = TEST_DF["ml_prediction"].apply(lambda x: 1 if x.lower() not in ["normal", "benign"] else 0)
-
     total_logs = len(TEST_DF)
-    attack_logs = TEST_DF[TEST_DF["ml_label"] == 1]
+    attack_logs = TEST_DF[TEST_DF["label"] == 1]
     attack_count = len(attack_logs)
     benign_count = total_logs - attack_count
     
-    # Attack type breakdown (ML-derived)
-    attack_cats = Counter(TEST_DF["ml_prediction"].tolist())
+    # Attack type breakdown
+    attack_cats = Counter(TEST_DF["attack_cat"].tolist())
     
     # Calculate percentages
     normal_traffic_pct = (benign_count * 100) // total_logs if total_logs > 0 else 0
@@ -1066,14 +1068,14 @@ def get_analytics():
     
     # Ensure we have at least Normal Traffic
     if len(distribution_data) < 6:
-        distribution_labels.insert(0, "Benign Activity")
+        distribution_labels.insert(0, "Baseline Traffic")
         distribution_data.insert(0, normal_traffic_pct)
     
-    # Attack frequency (ML-derived)
+    # Attack frequency
     attack_vectors = {}
-    for cat in TEST_DF["ml_prediction"].unique():
+    for cat in TEST_DF["attack_cat"].unique():
         if cat and cat.lower() not in ["normal", "benign"]:
-            count = (TEST_DF["ml_prediction"] == cat).sum()
+            count = (TEST_DF["attack_cat"] == cat).sum()
             attack_vectors[cat] = int(count)
     
     # Sort by frequency

@@ -93,21 +93,21 @@ export default function RealtimeCorrelation() {
                     logCounterRef.current += 1
                     setLogsCount(logCounterRef.current)
 
-                    // Retain ALL logs — no slicing
-                    setRecentLogs(prev => [...prev, {
+                    // Retain recent logs for visual feed (slice for performance)
+                    setRecentLogs(prev => [{
                         count: logCounterRef.current,
                         analysis,
                         timestamp: new Date().toLocaleTimeString()
-                    }])
+                    }, ...prev].slice(0, 50))
 
-                    // Retain ALL threat events — no slicing
+                    // Retain recent threat events
                     if (analysis.decision === 'ATTACK') {
-                        setThreatHistory(prev => [...prev, {
+                        setThreatHistory(prev => [{
                             count: logCounterRef.current,
                             prediction: analysis.prediction,
                             confidence: analysis.confidence,
                             timestamp: new Date().toLocaleTimeString()
-                        }])
+                        }, ...prev].slice(0, 50))
                     }
                 } catch (e) {
                     console.error('Error parsing stream data:', e)

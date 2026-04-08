@@ -72,12 +72,13 @@ export default function LiveTraffic() {
             
             autoPageRef.current = true
             
-            // Connect to SSE stream
+            // Connect to SSE stream with cache-busting
             if (eventSourceRef.current) {
                 eventSourceRef.current.close()
             }
-
-            eventSourceRef.current = new EventSource(`${API}/stream`)
+            
+            const streamUrl = `${API}/stream?t=${Date.now()}`
+            eventSourceRef.current = new EventSource(streamUrl)
 
             eventSourceRef.current.onmessage = (event) => {
                 try {
@@ -150,8 +151,8 @@ export default function LiveTraffic() {
             ...analysis
         }
 
-        // Retain ALL logs — no slicing
-        setLogs(prev => [newLog, ...prev])
+        // Performance optimization: Slice the list to retain only relevant recent logs
+        setLogs(prev => [newLog, ...prev].slice(0, 1000))
 
         // Keep user on page 1 while streaming (newest first)
         if (autoPageRef.current) {
