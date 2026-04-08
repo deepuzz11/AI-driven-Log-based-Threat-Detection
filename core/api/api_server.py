@@ -697,26 +697,31 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
                 "pattern": pattern
             })
 
-    # --- ADVANCED SUMMARIZATION (BART Pipeline) ---
+    # --- ENHANCED SUMMARIZATION (BART NLP) ---
     attack_logs = [l for l in sequence_data if l["analysis"]["decision"] == "ATTACK"]
-    # Generate descriptive strings for BART: "A [Type] attack was detected from [SRC] targeting [DST] over [PROTO] protocol using [SERVICE]" 
-    descriptive_sentences = []
-    for l in attack_logs[:10]:
-        descriptive_sentences.append(f"A {l['analysis']['prediction']} attack was detected from {l['src']} targeting {l['dst']} over {l['proto']} protocol using {l['service']} service.")
+    # Fallback/Primary Phrasing Logic
+    top_atk_tuple = Counter(all_attacks).most_common(1)[0] if all_attacks else ("Normal Traffic", 0)
+    top_src = Counter(threat_sources).most_common(1)[0][0] if threat_sources else "Safe Source"
     
-    if not attack_logs:
-        raw_text = "The following are network activity logs showing normal TCP/UDP connections. No malicious patterns were observed."
-    else:
-        raw_text = " ".join(descriptive_sentences)
+    # Generate high-quality input for BART
+    descriptive_sentences = [f"Sequence analysis identifies {len(attack_logs)} suspicious events."]
+    for l in attack_logs[:12]:
+        descriptive_sentences.append(f"A {l['analysis']['prediction']} attack detected from {l['src']} targeting {l['dst']} via {l['proto']}.")
     
-    if summarizer:
+    raw_text = " ".join(descriptive_sentences) if len(attack_logs) > 0 else "System monitoring reveals stabilized traffic patterns with no immediate neural anomalies detected in the last sequence batch."
+    
+    if summarizer and len(attack_logs) > 0:
         try:
-            summary_res = summarizer(raw_text, max_length=50, min_length=10, do_sample=False)
+            summary_res = summarizer(raw_text, max_length=60, min_length=20, do_sample=False)
             final_summary = [summary_res[0]['summary_text']]
-        except:
-            final_summary = [raw_text[:200] + "..."]
+        except Exception as e:
+            final_summary = [f"Critical Alert: Sequence correlation identifies {len(attack_logs)} potential {top_atk_tuple[0]} incidents originating from {top_src}. Immediate protocol investigation recommended for the involved vectors."]
     else:
-        final_summary = [f"Detected {len(attack_logs)} incidents across {total_batch_count} events. Top vector: {Counter(all_attacks).most_common(1)[0][0] if all_attacks else 'Normal'}."]
+        # High-Quality Template Fallback
+        if len(attack_logs) > 0:
+            final_summary = [f"Sequence analysis has identified a cluster of {len(attack_logs)} {top_atk_tuple[0]} events. The primary threat vector originates from {top_src}, utilizing {primary_proto.upper()} protocol anomalies. Immediate filtering of the identified source IP is recommended to prevent further escalation."]
+        else:
+            final_summary = ["The neural engine has evaluated the current sequence window as benign. All traffic follows standard protocol behaviors with no correlated threat indicators present."]
 
     # --- ENHANCED EXPLAINABILITY (WHO/WHERE/WHAT/HOW + WHY) ---
     threat_count = len(attack_logs)

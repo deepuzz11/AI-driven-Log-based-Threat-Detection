@@ -336,17 +336,64 @@ export default function RealtimeCorrelation() {
                 {correlationData && (
                     <div className="results-section fade-in">
                         {/* Executive Summary Section (NLP Powered) */}
-                        <div className="card summary-card" style={{ marginBottom: '24px', borderLeft: '4px solid var(--accent-purple)' }}>
-                            <div className="card-header" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', border: 'none' }}>
-                                <Search size={14} /> Summarizing last {(correlationData?.correlation_stats?.benign_entries || 0) + (correlationData?.correlation_stats?.attacks_detected || 0) || (correlationData?.sequence_logs?.length || 10)} logs...
-                            </div>
-                            <div className="card-body" style={{ fontSize: '15px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)', paddingTop: '10px' }}>
-                                <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
-                                    <div style={{ color: 'var(--accent-pink)', fontWeight: 'bold', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                        <RefreshCw size={14} /> SUMMARY:
-                                    </div>
+                        <div className="card summary-card" style={{ 
+                            marginBottom: '24px', 
+                            borderLeft: '4px solid var(--accent-purple)',
+                            background: 'rgba(15, 23, 42, 0.4)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            overflow: 'hidden',
+                            position: 'relative'
+                        }}>
+                            {/* Terminal Scanline Effect */}
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02))', backgroundSize: '100% 4px, 3px 100%', pointerEvents: 'none', opacity: 0.3 }} />
+                            
+                            <div className="card-header" style={{ 
+                                background: 'rgba(59, 130, 246, 0.15)', 
+                                color: '#60a5fa', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '8px', 
+                                fontSize: '11px', 
+                                fontWeight: 800,
+                                letterSpacing: '0.1em',
+                                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                padding: '10px 20px',
+                                textTransform: 'uppercase'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Search size={14} /> NEURAL SEQUENCE AUDIT: LAST {(correlationData?.correlation_stats?.benign_entries || 0) + (correlationData?.correlation_stats?.attacks_detected || 0) || (correlationData?.sequence_logs?.length || 10)} EVENTS
                                 </div>
-                                {Array.isArray(correlationData.summary) ? correlationData.summary[0] : correlationData.summary}
+                                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>[ ENGINE: BART-DISTIL-CNN ]</div>
+                            </div>
+                            <div className="card-body" style={{ padding: '24px 24px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                    <div style={{ 
+                                        color: 'var(--accent-pink)', 
+                                        fontWeight: 900, 
+                                        fontSize: '12px', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '6px',
+                                        background: 'rgba(236, 72, 153, 0.15)',
+                                        padding: '4px 10px',
+                                        borderRadius: '4px',
+                                        letterSpacing: '0.05em'
+                                    }}>
+                                        <RefreshCw size={14} /> EXECUTIVE SUMMARY
+                                    </div>
+                                    <div style={{ height: '1px', flexGrow: 1, background: 'linear-gradient(90deg, rgba(236, 72, 153, 0.3), transparent)' }}></div>
+                                </div>
+                                <div style={{ 
+                                    fontSize: '16px', 
+                                    lineHeight: '1.8', 
+                                    color: 'rgba(255,255,255,0.95)', 
+                                    fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
+                                    paddingRight: '20px'
+                                }}>
+                                    {Array.isArray(correlationData.summary) ? correlationData.summary[0] : correlationData.summary}
+                                </div>
                             </div>
                         </div>
 
