@@ -46,33 +46,32 @@ export default function LiveTraffic() {
     const autoPageRef = useRef(true)
 
     // Start real-time log generation
-    const startScan = useCallback(async () => {
-        if (isScanning) return
+    const startScan = useCallback(async (isAutoConnect = false) => {
+        if (isScanning && !isAutoConnect) return
         
-        setIsLoading(true)
+        if (!isAutoConnect) setIsLoading(true)
         try {
             const eps = parseInt(eventRate) || 5
             
-            // Start backend log generation
-            const response = await fetch(`${API}/realtime/start?eps=${eps}`, { 
-                method: 'POST'
-            })
-            
-            if (!response.ok) {
-                throw new Error('Failed to start real-time generation')
+            // Start backend log generation if not auto-connecting
+            if (!isAutoConnect) {
+                const response = await fetch(`${API}/realtime/start?eps=${eps}`, { 
+                    method: 'POST'
+                })
+                
+                if (!response.ok) {
+                    throw new Error('Failed to start real-time generation')
+                }
+                
+                toastSuccess('Stream Active', `Live traffic started at ${eps} events/sec`)
             }
 
             setIsScanning(true)
-            logCounterRef.current = 0
-            threatCounterRef.current = 0
-            setTotalEvents(0)
-            setThreatCount(0)
-            setLogs([])
-            setCurrentPage(1)
+            // DO NOT clear logs here anymore to retain history
+            // We only clear if the user explicitly clicks the Trash icon or 'clear' param is true
+            
             autoPageRef.current = true
             
-            toastSuccess('Stream Active', `Live traffic started at ${eps} events/sec`)
-
             // Connect to SSE stream
             if (eventSourceRef.current) {
                 eventSourceRef.current.close()
@@ -93,15 +92,19 @@ export default function LiveTraffic() {
                 console.error("SSE connection error")
                 setIsScanning(false)
                 eventSourceRef.current?.close()
-                toastError('Connection Lost', 'SSE stream disconnected unexpectedly')
+                if (!isAutoConnect) {
+                    toastError('Connection Lost', 'SSE stream disconnected unexpectedly')
+                }
             }
 
         } catch (e) {
-            toastError('Start Failed', 'Could not initiate live traffic scan')
+            if (!isAutoConnect) {
+                toastError('Start Failed', 'Could not initiate live traffic scan')
+            }
             console.error(e)
             setIsScanning(false)
         } finally {
-            setIsLoading(false)
+            if (!isAutoConnect) setIsLoading(false)
         }
     }, [eventRate, isScanning])
 
@@ -150,14 +153,22 @@ export default function LiveTraffic() {
     }, [])
 
 
-    const clearLogs = () => {
-        setLogs([])
-        setThreatCount(0)
-        setTotalEvents(0)
-        threatCounterRef.current = 0
-        logCounterRef.current = 0
-        setCurrentPage(1)
-        try { localStorage.removeItem(STORAGE_KEY) } catch(e) {}
+    const clearLogs = async () => {
+        if (!window.confirm("Are you sure you want to clear all log history?")) return
+        
+        try {
+            await fetch(`${API}/realtime/clear`, { method: 'POST' })
+            setLogs([])
+            setThreatCount(0)
+            setTotalEvents(0)
+            threatCounterRef.current = 0
+            logCounterRef.current = 0
+            setCurrentPage(1)
+            localStorage.removeItem(STORAGE_KEY)
+            toastSuccess('Logs Cleared', 'Historical traffic data purged from system')
+        } catch (e) {
+            toastError('Clear Failed', 'Could not purge backend logs')
+        }
     }
 
     // Page navigation
@@ -175,8 +186,44 @@ export default function LiveTraffic() {
         } catch (e) { console.warn('Failed to persist LiveTraffic history:', e) }
     }, [logs, totalEvents, threatCount])
 
-    // Cleanup on unmount
+    // Initial load: history and status
     useEffect(() => {
+        const init = async () => {
+            setIsLoading(true)
+            try {
+                // 1. Fetch backend status
+                const sTab = await fetch(`${API}/realtime/status`)
+                const sData = await sTab.json()
+                if (sData.is_running) {
+                    setEventRate(String(sData.event_rate))
+                    startScan(true) // Auto-reconnect SSE
+                }
+
+                // 2. Fetch backend history (more reliable than localStorage)
+                const hTab = await fetch(`${API}/realtime/history?limit=1000`)
+                const hData = await hTab.json()
+                
+                if (hData.logs && hData.logs.length > 0) {
+                    // Combine with localStorage to be safe, but backend is priority
+                    setLogs(hData.logs)
+                    
+                    const tTotal = hData.logs.length
+                    const tThreats = hData.logs.filter(l => l.decision === 'ATTACK').length
+                    
+                    setTotalEvents(tTotal)
+                    setThreatCount(tThreats)
+                    logCounterRef.current = tTotal
+                    threatCounterRef.current = tThreats
+                }
+            } catch (e) {
+                console.warn('Sync failed, falling back to local state:', e)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        
+        init()
+
         return () => {
             if (eventSourceRef.current) {
                 eventSourceRef.current.close()
@@ -252,7 +299,7 @@ export default function LiveTraffic() {
                             {!isScanning ? (
                                 <button 
                                     className="btn-neo btn-neo-primary" 
-                                    onClick={startScan}
+                                    onClick={() => startScan(false)}
                                     disabled={isLoading}
                                     style={{ opacity: isLoading ? 0.6 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                                 >

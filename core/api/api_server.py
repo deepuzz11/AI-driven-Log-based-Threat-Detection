@@ -384,7 +384,7 @@ class RealtimeGenerator:
                 print(f"[ERROR] Log generation error: {e}")
                 time.sleep(1)
     
-    def start(self, eps=5):
+    def start(self, eps=5, clear_log=False):
         """Start real-time log generation"""
         if self.is_running:
             return False
@@ -392,9 +392,10 @@ class RealtimeGenerator:
         self.event_rate = max(1, min(50, eps))
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
         
-        # Clear the log file
-        with open(self.log_path, "w") as f:
-            pass
+        # Clear the log file only if explicitly requested
+        if clear_log or not os.path.exists(self.log_path):
+            with open(self.log_path, "w") as f:
+                pass
         
         self.is_running = True
         self.thread = threading.Thread(target=self.generate_logs, daemon=True)
@@ -627,16 +628,70 @@ def stream_logs():
 
 
 @app.post("/api/realtime/start")
-def start_realtime_generation(eps: int = Query(5)):
+def start_realtime_generation(eps: int = Query(5), clear: bool = Query(False)):
     """Start real-time log generation"""
-    if log_generator.start(eps):
+    if log_generator.start(eps, clear_log=clear):
         return {
             "status": "started",
             "event_rate": log_generator.event_rate,
-            "log_path": log_generator.log_path
+            "log_path": log_generator.log_path,
+            "cleared": clear
         }
     else:
         return {"status": "already_running"}
+
+
+@app.get("/api/realtime/status")
+def get_realtime_status():
+    """Check if real-time generation is currently active"""
+    return {
+        "is_running": log_generator.is_running,
+        "event_rate": log_generator.event_rate
+    }
+
+
+@app.get("/api/realtime/history")
+def get_realtime_history(limit: int = Query(100)):
+    """Fetch recent history from the real-time log file"""
+    log_path = log_generator.log_path
+    if not os.path.exists(log_path):
+        return {"logs": [], "total": 0}
+    
+    try:
+        with open(log_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        # Get last 'limit' lines
+        recent_lines = lines[-limit:] if len(lines) > limit else lines
+        
+        history = []
+        for line in recent_lines:
+            try:
+                row = json.loads(line.strip())
+                # Re-analyze for complete UI state
+                analysis = perform_analysis(row)
+                history.append(analysis)
+            except:
+                continue
+        
+        return {
+            "logs": history[::-1], # Newest first
+            "total_in_file": len(lines),
+            "returned": len(history)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/realtime/clear")
+def clear_realtime_logs():
+    """Explicitly clear the real-time log file"""
+    try:
+        with open(log_generator.log_path, "w") as f:
+            pass
+        return {"status": "cleared"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/realtime/stop")
