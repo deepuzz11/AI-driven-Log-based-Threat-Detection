@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { toastSuccess, toastError } from '../utils/toastHelpers.jsx'
-import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from 'lucide-react'
 import SequenceViewer from '../components/SequenceViewer'
 import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
@@ -9,19 +9,30 @@ import '../styles/RealtimeCorrelation.css'
 const API = '/api'
 const LOGS_PER_PAGE = 40
 const THREATS_PER_PAGE = 20
+const STORAGE_KEY = 'correlation_history'
+
+// Load persisted history from localStorage
+const loadPersistedHistory = () => {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+        if (saved) return JSON.parse(saved)
+    } catch (e) { console.warn('Failed to load Correlation history:', e) }
+    return null
+}
 
 export default function RealtimeCorrelation() {
+    const persisted = useRef(loadPersistedHistory())
     const [isRunning, setIsRunning] = useState(false)
-    const [logsCount, setLogsCount] = useState(0)
+    const [logsCount, setLogsCount] = useState(() => persisted.current?.logsCount || 0)
     const [eventRate, setEventRate] = useState('5')
     const [correlationData, setCorrelationData] = useState(null)
     const [isAnalyzing, setIsAnalyzing] = useState(false)
-    const [recentLogs, setRecentLogs] = useState([])
-    const [threatHistory, setThreatHistory] = useState([])
-    const [autoLearnedRules, setAutoLearnedRules] = useState([])
+    const [recentLogs, setRecentLogs] = useState(() => persisted.current?.recentLogs || [])
+    const [threatHistory, setThreatHistory] = useState(() => persisted.current?.threatHistory || [])
+    const [autoLearnedRules, setAutoLearnedRules] = useState(() => persisted.current?.autoLearnedRules || [])
     const [activeTab, setActiveTab] = useState('stream')
     const eventSourceRef = useRef(null)
-    const logCounterRef = useRef(0)
+    const logCounterRef = useRef(persisted.current?.logsCount || 0)
 
     // Pagination state
     const [logsPage, setLogsPage] = useState(1)
@@ -62,9 +73,7 @@ export default function RealtimeCorrelation() {
             const eps = parseInt(eventRate) || 5
             await fetch(`${API}/realtime/start?eps=${eps}`, { method: 'POST' })
             setIsRunning(true)
-            logCounterRef.current = 0
-            setRecentLogs([])
-            setThreatHistory([])
+            // Continue from persisted counter (don't reset on new stream)
             setLogsPage(1)
             setThreatsPage(1)
             
@@ -168,6 +177,31 @@ export default function RealtimeCorrelation() {
         } finally {
             setIsAnalyzing(false)
         }
+    }, [])
+
+    // Persist history to localStorage whenever state changes
+    useEffect(() => {
+        try {
+            const toSave = {
+                recentLogs: recentLogs.slice(-2000),   // Cap for storage limits
+                threatHistory: threatHistory.slice(-500),
+                autoLearnedRules: autoLearnedRules.slice(-50),
+                logsCount
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+        } catch (e) { console.warn('Failed to persist Correlation history:', e) }
+    }, [recentLogs, threatHistory, autoLearnedRules, logsCount])
+
+    // Clear all history
+    const clearHistory = useCallback(() => {
+        setRecentLogs([])
+        setThreatHistory([])
+        setAutoLearnedRules([])
+        setLogsCount(0)
+        logCounterRef.current = 0
+        setLogsPage(1)
+        setThreatsPage(1)
+        try { localStorage.removeItem(STORAGE_KEY) } catch(e) {}
     }, [])
 
     // Cleanup on unmount
@@ -320,6 +354,22 @@ export default function RealtimeCorrelation() {
                                         Analyze Correlation
                                     </>
                                 )}
+                            </button>
+
+                            <button
+                                onClick={clearHistory}
+                                disabled={isRunning || (recentLogs.length === 0 && threatHistory.length === 0)}
+                                className="btn"
+                                style={{
+                                    background: 'rgba(255,255,255,0.04)',
+                                    color: 'var(--text-secondary)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: '10px'
+                                }}
+                                title="Clear all session history"
+                            >
+                                <Trash2 size={16} />
+                                Clear History
                             </button>
                         </div>
                     </div>

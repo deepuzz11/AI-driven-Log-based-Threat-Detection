@@ -9,20 +9,31 @@ import {
 
 const API = '/api'
 const LOGS_PER_PAGE = 50
+const STORAGE_KEY = 'livetraffic_history'
+
+// Load persisted history from localStorage
+const loadPersistedHistory = () => {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+        if (saved) return JSON.parse(saved)
+    } catch (e) { console.warn('Failed to load LiveTraffic history:', e) }
+    return null
+}
 
 export default function LiveTraffic() {
-    const [logs, setLogs] = useState([])
+    const persisted = useRef(loadPersistedHistory())
+    const [logs, setLogs] = useState(() => persisted.current?.logs || [])
     const [isScanning, setIsScanning] = useState(false)
-    const [totalEvents, setTotalEvents] = useState(0)
-    const [threatCount, setThreatCount] = useState(0)
+    const [totalEvents, setTotalEvents] = useState(() => persisted.current?.totalEvents || 0)
+    const [threatCount, setThreatCount] = useState(() => persisted.current?.threatCount || 0)
     const [eventRate, setEventRate] = useState('5')
     const [isLoading, setIsLoading] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
 
     const logContainerRef = useRef(null)
     const eventSourceRef = useRef(null)
-    const logCounterRef = useRef(0)
-    const threatCounterRef = useRef(0)
+    const logCounterRef = useRef(persisted.current?.totalEvents || 0)
+    const threatCounterRef = useRef(persisted.current?.threatCount || 0)
 
     // Pagination calculations
     const totalPages = useMemo(() => Math.max(1, Math.ceil(logs.length / LOGS_PER_PAGE)), [logs.length])
@@ -142,8 +153,11 @@ export default function LiveTraffic() {
     const clearLogs = () => {
         setLogs([])
         setThreatCount(0)
+        setTotalEvents(0)
         threatCounterRef.current = 0
+        logCounterRef.current = 0
         setCurrentPage(1)
+        try { localStorage.removeItem(STORAGE_KEY) } catch(e) {}
     }
 
     // Page navigation
@@ -151,6 +165,15 @@ export default function LiveTraffic() {
         autoPageRef.current = false
         setCurrentPage(Math.max(1, Math.min(page, totalPages)))
     }
+
+    // Persist history to localStorage whenever logs change
+    useEffect(() => {
+        try {
+            // Cap at 2000 logs for storage to avoid exceeding localStorage limits
+            const toSave = { logs: logs.slice(0, 2000), totalEvents, threatCount }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+        } catch (e) { console.warn('Failed to persist LiveTraffic history:', e) }
+    }, [logs, totalEvents, threatCount])
 
     // Cleanup on unmount
     useEffect(() => {
