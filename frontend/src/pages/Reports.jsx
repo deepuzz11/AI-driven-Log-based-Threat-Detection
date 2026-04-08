@@ -34,28 +34,29 @@ export default function Reports() {
 
     return (
         <div className="page-full fade-in-scale stagger-1">
-            <div className="card glass-panel slide-up stagger-2" style={{ padding: '24px 28px' }}>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '12px' }}>
-                    <div className="slide-up stagger-3">
-                        <h1 className="text-gradient" style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-                            Incident Analysis
-                        </h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            <div className="page-header slide-up stagger-2" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '0 0 24px 0', marginBottom: '24px', borderBottom: '1px solid var(--border)', gap: '12px' }}>
+                <div className="page-title-section">
+                    <ShieldAlert size={28} className="page-icon" />
+                    <div>
+                        <h1 style={{ margin: 0, fontSize: '24px' }}>Incident Analysis</h1>
+                        <p style={{ margin: 0, opacity: 0.7, fontSize: '13px' }}>
                             Technical audit trail for intercepted anomalies and high-velocity threats.
                         </p>
                     </div>
-                    <button className="btn btn-secondary slide-up stagger-3">
-                        <Download size={16} /> Export Analysis Log
-                    </button>
                 </div>
+                <button className="btn btn-secondary slide-up stagger-3">
+                    <Download size={16} /> Export Analysis Log
+                </button>
+            </div>
 
-                <div className="slide-up stagger-4" style={{ position: 'relative', marginBottom: '24px' }}>
+            <div className="card glass-panel slide-up stagger-3" style={{ padding: '24px 28px' }}>
+
+                <div className="slide-up stagger-3" style={{ position: 'relative', marginBottom: '24px' }}>
                     <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
                     <input type="text" className="input-pro" placeholder="Search operational audit trail..." style={{ paddingLeft: '36px', width: '100%', boxSizing: 'border-box' }} />
                 </div>
 
-                <div className="slide-up stagger-5 table-responsive" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+                <div className="slide-up stagger-4 table-responsive" style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
                             <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

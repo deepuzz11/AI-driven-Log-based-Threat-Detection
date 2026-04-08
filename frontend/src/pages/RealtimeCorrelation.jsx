@@ -31,7 +31,17 @@ export default function RealtimeCorrelation() {
             setRecentLogs([])
             setThreatHistory([])
             
-            toast.success(`Real-time log generation started at ${eps} EPS`)
+            toast.custom((t) => (
+                <div className="custom-toast success slide-down">
+                    <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Stream Started</div>
+                        <div className="custom-toast-message">Real-time traffic started at {eps} EPS</div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                </div>
+            ), { duration: 3000 })
 
             // Connect to SSE stream
             if (eventSourceRef.current) {
@@ -70,11 +80,31 @@ export default function RealtimeCorrelation() {
             eventSourceRef.current.onerror = () => {
                 setIsRunning(false)
                 eventSourceRef.current?.close()
-                toast.error('Stream connection lost')
+                toast.custom((t) => (
+                    <div className="custom-toast error slide-down">
+                        <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
+                        <div className="custom-toast-content">
+                            <div className="custom-toast-title">Connection Lost</div>
+                            <div className="custom-toast-message">Stream connection lost</div>
+                        </div>
+                        <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                        <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                    </div>
+                ), { duration: 3000 })
             }
 
         } catch (e) {
-            toast.error('Failed to start real-time generation')
+            toast.custom((t) => (
+                <div className="custom-toast error slide-down">
+                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Start Failed</div>
+                        <div className="custom-toast-message">Failed to start real-time generation</div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                </div>
+            ), { duration: 3000 })
             console.error(e)
         }
     }, [eventRate])
@@ -87,9 +117,29 @@ export default function RealtimeCorrelation() {
                 eventSourceRef.current.close()
             }
             setIsRunning(false)
-            toast.success('Real-time log generation stopped')
+            toast.custom((t) => (
+                <div className="custom-toast success slide-down">
+                    <div className="custom-toast-icon"><CheckCircle2 size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Stream Stopped</div>
+                        <div className="custom-toast-message">Real-time log generation stopped</div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                </div>
+            ), { duration: 3000 })
         } catch (e) {
-            toast.error('Failed to stop real-time generation')
+            toast.custom((t) => (
+                <div className="custom-toast error slide-down">
+                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Stop Failed</div>
+                        <div className="custom-toast-message">Failed to stop real-time generation</div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                </div>
+            ), { duration: 3000 })
         }
     }, [])
 
@@ -150,7 +200,17 @@ export default function RealtimeCorrelation() {
                 ), { duration: 4000 })
             }
         } catch (e) {
-            toast.error('Correlation analysis failed')
+            toast.custom((t) => (
+                <div className="custom-toast error slide-down">
+                    <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
+                    <div className="custom-toast-content">
+                        <div className="custom-toast-title">Analysis Failed</div>
+                        <div className="custom-toast-message">Correlation analysis failed</div>
+                    </div>
+                    <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
+                    <div className="custom-toast-progress" style={{ animationDuration: '3s' }} />
+                </div>
+            ), { duration: 3000 })
             console.error(e)
         } finally {
             setIsAnalyzing(false)

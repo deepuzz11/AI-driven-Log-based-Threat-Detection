@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Shield, Bell, Key, CheckCircle2, X, Cpu, Globe, Zap } from 'lucide-react'
+import { CheckCircle2, X, Cpu, Globe, Zap, Save, RefreshCcw } from 'lucide-react'
 
 export default function Settings() {
     const handleSave = () => {
@@ -17,38 +17,21 @@ export default function Settings() {
         ), { duration: 3000 })
     }
 
-    const scrollToSection = (e, id) => {
-        e.preventDefault();
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
     return (
         <div className="page-full fade-in-scale stagger-1">
-            <div className="slide-up stagger-3" style={{ marginBottom: '32px' }}>
-                <h1 className="text-gradient" style={{ fontSize: '26px', fontWeight: 700, marginBottom: '6px' }}>
-                    System Configuration
-                </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-                    Manage your ThreatEngine Sentinel preferences, API keys, and operational parameters.
-                </p>
+            <div className="page-header slide-up stagger-2" style={{ padding: '0 0 24px 0', marginBottom: '32px', borderBottom: '1px solid var(--border)' }}>
+                <div className="page-title-section">
+                    <Cpu size={28} className="page-icon" />
+                    <div>
+                        <h1 style={{ margin: 0, fontSize: '24px' }}>System Configuration</h1>
+                        <p style={{ margin: 0, opacity: 0.7, fontSize: '13px' }}>
+                            Manage your ThreatEngine Sentinel preferences, API keys, and operational parameters.
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <div className="settings-page-pro slide-up stagger-4">
-                {/* Left Sidebar Menu */}
-                <div className="settings-nav">
-                    <a href="#api" onClick={(e) => scrollToSection(e, 'api')} className="settings-nav-item">
-                        <Globe size={16} /> Cloud API
-                    </a>
-                    <a href="#security" onClick={(e) => scrollToSection(e, 'security')} className="settings-nav-item">
-                        <Cpu size={16} /> Detection Engine
-                    </a>
-                    <a href="#notifications" onClick={(e) => scrollToSection(e, 'notifications')} className="settings-nav-item">
-                        <Zap size={16} /> Communications
-                    </a>
-                </div>
-
-                {/* Right Content Area */}
-                <div className="settings-content-wrapper">
+            <div className="settings-content-wrapper slide-up stagger-4" style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                     {/* Cloud API Section */}
                     <div id="api" className="settings-section">
                         <h2 className="settings-section-title">Provisioning Endpoints</h2>
@@ -81,7 +64,15 @@ export default function Settings() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <label className="checkbox-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <input type="checkbox" defaultChecked />
-                                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Enable Hybrid Analysis (ML + Pattern Matching)</span>
+                                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Enable DL + Rules Hybrid Engine</span>
+                            </label>
+                            <label className="checkbox-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input type="checkbox" defaultChecked />
+                                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Enable BART-CNN Threat Summarisation</span>
+                            </label>
+                            <label className="checkbox-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input type="checkbox" defaultChecked />
+                                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Enable Deep Sequence Explainability & SHAP</span>
                             </label>
                             <label className="checkbox-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <input type="checkbox" defaultChecked />
@@ -115,7 +106,6 @@ export default function Settings() {
                         <button className="btn-neo btn-neo-primary" onClick={handleSave} style={{ minWidth: '160px' }}>Apply Parameters</button>
                     </div>
                 </div>
-            </div>
         </div>
     )
 }
