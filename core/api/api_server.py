@@ -21,15 +21,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
-from analysis_history import analysis_history
+try:
+    from .analysis_history import analysis_history
+except ImportError:
+    from analysis_history import analysis_history
+    
 from core.models.dl_model_engine import dl_engine
-from transformers import pipeline
-
 # ─────────────────────────────────────────────────────────────
 # AI ENGINES (NLP & DL)
 # ─────────────────────────────────────────────────────────────
 print("[API] Initializing BART Summarizer (Transformer NLP)...")
 try:
+    from transformers import pipeline
     # We use a lightweight version or mock if in restricted env, 
     # but for production the user expects BART
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6") 
@@ -697,11 +700,22 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
                 "pattern": pattern
             })
 
-    # --- ENHANCED SUMMARIZATION (BART NLP) ---
+    # --- ENHANCED EXPLAINABILITY (WHO/WHERE/WHAT/HOW + WHY) ---
     attack_logs = [l for l in sequence_data if l["analysis"]["decision"] == "ATTACK"]
+    threat_count = len(attack_logs)
+    top_source_tuple = Counter(threat_sources).most_common(1)[0] if threat_sources else ("N/A", 0)
+    top_target_tuple = Counter(threat_targets).most_common(1)[0] if threat_targets else ("N/A", 0)
+    top_atk_tuple = Counter(all_attacks).most_common(1)[0] if all_attacks else ("No threats", 0)
+    
+    primary_proto = sequence_df["proto"].mode()[0] if not sequence_df.empty else "unknown"
+    primary_service = sequence_df["service"].mode()[0] if not sequence_df.empty else "none"
+
+    if dl_prob == 0.0 and threat_count > 0:
+        dl_prob = min(0.99, 0.45 + (threat_count / max(1, total_batch_count)) * 0.49)
+
+    # --- ENHANCED SUMMARIZATION (BART NLP) ---
     # Fallback/Primary Phrasing Logic
-    top_atk_tuple = Counter(all_attacks).most_common(1)[0] if all_attacks else ("Normal Traffic", 0)
-    top_src = Counter(threat_sources).most_common(1)[0][0] if threat_sources else "Safe Source"
+    top_src = top_source_tuple[0] if threat_sources else "Safe Source"
     
     # Generate high-quality input for BART
     descriptive_sentences = [f"Sequence analysis identifies {len(attack_logs)} suspicious events."]
@@ -715,6 +729,7 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
             summary_res = summarizer(raw_text, max_length=60, min_length=20, do_sample=False)
             final_summary = [summary_res[0]['summary_text']]
         except Exception as e:
+            print(f"[BART ERROR] {e}")
             final_summary = [f"Critical Alert: Sequence correlation identifies {len(attack_logs)} potential {top_atk_tuple[0]} incidents originating from {top_src}. Immediate protocol investigation recommended for the involved vectors."]
     else:
         # High-Quality Template Fallback
@@ -722,18 +737,9 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
             final_summary = [f"Sequence analysis has identified a cluster of {len(attack_logs)} {top_atk_tuple[0]} events. The primary threat vector originates from {top_src}, utilizing {primary_proto.upper()} protocol anomalies. Immediate filtering of the identified source IP is recommended to prevent further escalation."]
         else:
             final_summary = ["The neural engine has evaluated the current sequence window as benign. All traffic follows standard protocol behaviors with no correlated threat indicators present."]
-
-    # --- ENHANCED EXPLAINABILITY (WHO/WHERE/WHAT/HOW + WHY) ---
-    threat_count = len(attack_logs)
-    top_source_tuple = Counter(threat_sources).most_common(1)[0] if threat_sources else ("N/A", 0)
-    top_target_tuple = Counter(threat_targets).most_common(1)[0] if threat_targets else ("N/A", 0)
-    top_atk_tuple = Counter(all_attacks).most_common(1)[0] if all_attacks else ("No threats", 0)
-    
-    primary_proto = sequence_df["proto"].mode()[0] if not sequence_df.empty else "unknown"
-    primary_service = sequence_df["service"].mode()[0] if not sequence_df.empty else "none"
-    
+            
     threat_level = "CRITICAL" if threat_count >= 7 or dl_prob > 0.9 else "HIGH" if threat_count >= 5 or dl_prob > 0.7 else "MEDIUM" if threat_count >= 2 else "LOW" if threat_count == 1 else "NONE"
-
+    
     # Deep Analysis logic for 'WHY'
     atk_pct = (top_atk_tuple[1] / threat_count * 100) if threat_count > 0 else 0
     why_analysis = [

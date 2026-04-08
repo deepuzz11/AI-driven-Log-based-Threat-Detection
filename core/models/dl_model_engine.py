@@ -65,9 +65,9 @@ class DLModelEngine:
         if self.model:
             self.model.save(self.model_path)
         if self.preprocessor:
-            joblib.save(self.preprocessor, self.preprocessor_path)
+            joblib.dump(self.preprocessor, self.preprocessor_path)
         if self.scaler:
-            joblib.save(self.scaler, self.scaler_path)
+            joblib.dump(self.scaler, self.scaler_path)
 
     def preprocess_sequence(self, df_seq):
         """Preprocess a sequence of logs (DataFrame)"""
@@ -117,7 +117,9 @@ class DLModelEngine:
         X_processed = self.preprocessor.fit_transform(X)
         
         self.scaler = StandardScaler(with_mean=False)
-        X_scaled = self.scaler.fit_transform(X_processed).toarray()
+        X_scaled = self.scaler.fit_transform(X_processed)
+        if hasattr(X_scaled, 'toarray'):
+            X_scaled = X_scaled.toarray()
         
         # Create sequences
         def create_sequences(X_data, y_data, seq_len):
