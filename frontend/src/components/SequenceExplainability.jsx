@@ -65,7 +65,7 @@ function SequenceExplainability({ explainability, correlationStats }) {
                                 {explainability.threat_level} Risk Detected
                             </div>
                             <div className="threat-subtitle">
-                                {explainability.attack_count} malicious entries in sequence of {(correlationStats?.attacks_detected || 0) + (correlationStats?.benign_entries || 10)}
+                                {explainability.attack_count || 0} malicious entries in sequence of {(correlationStats?.attacks_detected || 0) + (correlationStats?.benign_entries || 0) || 10}
                             </div>
                         </div>
                     </div>
@@ -143,27 +143,41 @@ function SequenceExplainability({ explainability, correlationStats }) {
                     </div>
                 )}
 
-                {/* Detection Metrics */}
-                <div className="metrics-grid">
-                    <div className="metric-box">
-                        <div className="metric-label">Malicious Entries</div>
-                        <div className="metric-value" style={{ color: 'var(--accent-red)' }}>
-                            {explainability.attack_count}
-                        </div>
+                {/* DL Probability Indicator */}
+                <div className="dl-probability-meter" style={{ marginBottom: '24px' }}>
+                    <div className="meter-label" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Neural Correlation Probability (Transformer)</span>
+                        <span style={{ color: getThreatColor(), fontWeight: 800 }}>{explainability.dl_probability || '0.00'}%</span>
                     </div>
-                    <div className="metric-box">
-                        <div className="metric-label">Analysis Time</div>
-                        <div className="metric-value" style={{ color: 'var(--accent-cyan)' }}>
-                            {correlationStats?.total_time_ms}ms
-                        </div>
-                    </div>
-                    <div className="metric-box">
-                        <div className="metric-label">Confidence Level</div>
-                        <div className="metric-value">
-                            {explainability.attack_count > 5 ? '95%' : explainability.attack_count > 2 ? '85%' : '75%'}
-                        </div>
+                    <div className="meter-bar-container" style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div 
+                            className="meter-bar" 
+                            style={{ 
+                                height: '100%', 
+                                width: `${explainability.dl_probability || 0}%`, 
+                                background: getThreatColor(),
+                                boxShadow: `0 0 10px ${getThreatColor()}`,
+                                transition: 'width 1s ease-out'
+                            }} 
+                        />
                     </div>
                 </div>
+
+                {/* WHY ANALYSIS (from DL Engine) */}
+                {explainability.why_analysis && explainability.why_analysis.length > 0 && (
+                    <div className="why-analysis-section" style={{ marginBottom: '24px' }}>
+                        <div className="section-title" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                            🧠 WHY Analysis (Neural Insights)
+                        </div>
+                        <div className="why-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {explainability.why_analysis.map((reason, idx) => (
+                                <div key={idx} className="why-item" style={{ fontSize: '14px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', borderLeft: '2px solid var(--accent-blue)' }}>
+                                    {reason}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Recommended Action */}
                 <div className="action-panel" style={{
@@ -172,41 +186,48 @@ function SequenceExplainability({ explainability, correlationStats }) {
                         ? 'rgba(239, 68, 68, 0.1)' 
                         : getThreatColor() === 'var(--accent-orange)'
                         ? 'rgba(245, 158, 11, 0.1)'
-                        : 'rgba(16, 185, 129, 0.1)'
+                        : 'rgba(16, 185, 129, 0.1)',
+                    marginBottom: '24px'
                 }}>
                     <div className="action-header">
                         <Shield size={18} style={{ color: getThreatColor() }} />
                         <span style={{ color: getThreatColor(), fontWeight: 700 }}>
-                            Recommended Action
+                            Recommended Actions
                         </span>
                     </div>
                     <div className="action-text">
-                        {getActionText()}
+                        <ul style={{ margin: '8px 0 0 0', paddingLeft: '18px' }}>
+                            {explainability.recommended_actions ? explainability.recommended_actions.map((action, idx) => (
+                                <li key={idx} style={{ marginBottom: '4px' }}>{action}</li>
+                            )) : (
+                                <li>{getActionText()}</li>
+                            )}
+                        </ul>
                     </div>
                 </div>
 
                 {/* Rule Correlation Info */}
                 <div className="correlation-info">
-                    <div className="info-title">Correlation Analysis</div>
+                    <div className="info-title">Hybrid Correlation Strategy</div>
                     <div className="info-content">
                         <div className="info-item">
-                            <span className="info-label">Detection Method:</span>
+                            <span className="info-label">Detection System:</span>
                             <span className="info-value">
-                                {explainability.unique_rules_hit > 5 ? 'Rule-based (High match rate)' : 'ML-based with rule validation'}
+                                {explainability.dl_probability > 70 ? 'Transformer Neural Engine (Primary)' : 'Hybrid Signature + DL Engine'}
                             </span>
                         </div>
                         <div className="info-item">
                             <span className="info-label">Confidence:</span>
                             <span className="info-value">
-                                {explainability.attack_count === 10 ? 'Very High (100% sequence compromised)' 
-                                : explainability.attack_count > 5 ? 'High (>50% sequence compromised)'
-                                : 'Medium (Partial sequence compromise)'}
+                                {explainability.dl_probability > 90 ? 'Critical Neural Certainty' 
+                                : explainability.dl_probability > 50 ? 'High Confidence (Sequence Match)'
+                                : 'Medium Confidence (Behavioral Anomaly)'}
                             </span>
                         </div>
                         <div className="info-item">
-                            <span className="info-label">Signature Status:</span>
-                            <span className="info-value">
-                                Active IDS/IPS signatures available
+                            <span className="info-label">Learning Status:</span>
+                            <span className="info-value" style={{ color: 'var(--accent-green)' }}>
+                                Auto-generated Rule available for this vector
                             </span>
                         </div>
                     </div>

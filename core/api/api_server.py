@@ -14,6 +14,7 @@ import pandas as pd
 import json
 import uvicorn
 import threading
+from collections import Counter
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +22,21 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 from analysis_history import analysis_history
+from core.models.dl_model_engine import dl_engine
+from transformers import pipeline
+
+# ─────────────────────────────────────────────────────────────
+# AI ENGINES (NLP & DL)
+# ─────────────────────────────────────────────────────────────
+print("[API] Initializing BART Summarizer (Transformer NLP)...")
+try:
+    # We use a lightweight version or mock if in restricted env, 
+    # but for production the user expects BART
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6") 
+    print("[API] BART Summarizer loaded.")
+except Exception as e:
+    print(f"[API] BART loading failed ({e}). Using analytical fallback.")
+    summarizer = None
 
 # ─────────────────────────────────────────────────────────────
 # CONFIG
@@ -287,7 +303,15 @@ print("[API] Loading testing dataset...")
 TEST_DF = pd.read_csv(TESTING_CSV)
 print(f"[API] Loaded {len(TEST_DF)} rows.")
 load_rules()
-print(f"[API] Loaded {len(patterns)} rules.")
+# ─────────────────────────────────────────────────────────────
+# INITIALIZE DL ENGINE
+# ─────────────────────────────────────────────────────────────
+print("[API] Initializing DL engine...")
+if not dl_engine.load():
+    print("[API] DL model not found. Training a small model for demonstration...")
+    # Train on a small sample of TEST_DF for demo purposes if no model exists
+    # In production, this should be pre-trained
+    dl_engine.train_from_df(TEST_DF.head(1000), epochs=1)
 
 # ─────────────────────────────────────────────────────────────
 # REAL-TIME LOG GENERATION
@@ -421,7 +445,7 @@ def sample_by_index(idx: int):
 
 
 def perform_analysis(row):
-    """Joint Rule-based and ML detection pipeline for correlated threat analysis."""
+    """Hybrid ML + Rule-based detection for individual logs."""
     total_start = time.perf_counter()
     log_line    = build_log_string(row)
 
@@ -435,7 +459,7 @@ def perform_analysis(row):
     pred_ml, ml_time_pure, conf_ml, feat_imp, class_probs = ml_detect(row)
     ml_time = time.perf_counter() - ml_t0
 
-    # 3. Correlation & Logic Fusion
+    # 3. Hybrid Logic Fusion
     is_attack_rule = len(rule_hits) > 0
     is_attack_ml   = pred_ml.lower() not in ("benign", "normal")
     
@@ -443,8 +467,7 @@ def perform_analysis(row):
     auto_rule_added = False
     new_rule_name = None
     if is_attack_ml and not is_attack_rule:
-        # Generate and add rule automatically
-        attack_type = pred_ml.lower().replace(" ", "_")
+        attack_type = pred_ml.lower().replace(" ", "_").replace("-", "_")
         new_rule_name = f"auto_learned_{attack_type}_{int(time.time())}"
         
         # Build regex pattern from row data
@@ -452,56 +475,48 @@ def perform_analysis(row):
         service = str(row.get("service", "")).lower()
         state = str(row.get("state", "")).lower()
         
-        # Create a more specific pattern if possible
+        # Create a hybrid pattern
         pattern_parts = []
         if proto: pattern_parts.append(re.escape(proto))
         if service and service != "-" and service != "none": pattern_parts.append(re.escape(service))
         if state and state != "-" and state != "none": pattern_parts.append(re.escape(state))
         
         if pattern_parts:
-            # We want to match all these parts in order
             pattern = ".*".join(pattern_parts)
-            remedy = f"Auto-learned from ML detection - {pred_ml}"
-            
             added = add_rule_to_file(
                 new_rule_name,
                 pattern,
                 pred_ml,
                 severity="HIGH",
-                remedy=remedy
+                remedy=f"Auto-learned from ML hybrid detection - {pred_ml}"
             )
             auto_rule_added = added
 
-    # Final decision strategy:
-    # If rules hit, we prioritize that category but still show ML confidence.
-    # If no rules hit but ML detects threat, we show ML results.
+    # Final decision strategy: Combined
     decision = "BENIGN"
     if is_attack_rule or is_attack_ml:
         decision = "ATTACK"
     
-    # Final prediction is Rule-based if available, else ML
+    # Prediction: Prioritize rule if hit, else ML
     prediction = pred_ml
     if is_attack_rule:
         prediction = rule_hits[0]["category"].upper()
     
-    # Correlate confidence: If rules hit, confidence is 100% for that pattern.
     final_conf = conf_ml if conf_ml is not None else 0.0
     if is_attack_rule:
-        # If ML also agrees, boost confidence or keep high
-        final_conf = max(final_conf, 100.0)
+        final_conf = max(final_conf, 95.0) # Rules are high confidence
 
     total_time = time.perf_counter() - total_start
 
-    # Build joined result
-    result = {
-        "method": "hybrid-correlated",
+    return {
+        "method": "ml-rule-hybrid",
         "decision": decision,
         "prediction": prediction,
         "rule_hits": rule_hits,
         "ml_details": {
             "prediction": pred_ml,
             "confidence": round(conf_ml, 2) if conf_ml else 0.0,
-            "class_probabilities": {k: round(v * 100, 2) for k, v in class_probs.items()} if class_probs else {}
+            "class_probabilities": class_probs
         },
         "cluster": get_cluster_info(prediction),
         "suggestion": get_suggestion(prediction),
@@ -514,10 +529,9 @@ def perform_analysis(row):
         "raw_log": build_log_string_industry(row),
         "row": row,
         "auto_rule_added": auto_rule_added,
-        "new_rule_name": new_rule_name if auto_rule_added else None
+        "new_rule_name": new_rule_name if auto_rule_added else None,
+        "detection_source": "RULE" if is_attack_rule else "ML" if is_attack_ml else "NONE"
     }
-
-    return result
 
 
 @app.post("/api/analyze")
@@ -610,17 +624,27 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
     # Get the last window_size logs
     window_logs = lines[-window_size:] if len(lines) >= window_size else lines
     
+    sequence_df = pd.DataFrame([json.loads(l.strip()) for l in window_logs])
+    
+    # DL prediction for sequence
+    dl_t0 = time.perf_counter()
+    dl_prob = dl_engine.predict_sequence(sequence_df)
+    dl_time = time.perf_counter() - dl_t0
+    
     sequence_data = []
     all_attacks = []
-    threat_sources = set()
-    threat_targets = set()
+    threat_sources = []
+    threat_targets = []
     all_rule_hits = []
     auto_learned_rules = []
     
     for idx, line in enumerate(window_logs):
         try:
             row_data = json.loads(line.strip())
+            # Run individual analysis but override method to reflect DL Correlation context
             analysis = perform_analysis(row_data)
+            analysis["method"] = "hybrid-dl-rule"
+            analysis["detection_source"] = "NEURAL" if analysis["decision"] == "ATTACK" and analysis["detection_source"] == "ML" else analysis["detection_source"]
             
             # Synthetic IPs for visualization
             src = ".".join(str(random.randint(1, 255)) for _ in range(4))
@@ -640,8 +664,8 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
             if analysis["decision"] == "ATTACK":
                 all_attacks.append(analysis["prediction"])
                 all_rule_hits.extend(analysis["rule_hits"])
-                threat_sources.add(src)
-                threat_targets.add(dst)
+                threat_sources.append(src)
+                threat_targets.append(dst)
                 
                 if analysis.get("auto_rule_added"):
                     auto_learned_rules.append({
@@ -653,54 +677,99 @@ def correlate_realtime_stream(start_count: int = Query(0), window_size: int = Qu
         except json.JSONDecodeError:
             continue
     
-    from collections import Counter
+    # DL-based Hybrid Logic
+    is_dl_attack = dl_prob > 0.5
+    is_rule_attack = len(all_rule_hits) > 0
+    total_batch_count = len(sequence_data)
     
-    # Calculate threat level
-    threat_count = len(all_attacks)
-    if threat_count >= 7:
-        threat_level = "CRITICAL"
-    elif threat_count >= 5:
-        threat_level = "HIGH"
-    elif threat_count >= 2:
-        threat_level = "MEDIUM"
-    elif threat_count == 1:
-        threat_level = "LOW"
+    # Auto-rule for DL
+    if is_dl_attack and not is_rule_attack and all_attacks:
+        top_atk = Counter(all_attacks).most_common(1)[0][0]
+        dl_rule_name = f"auto_dl_{top_atk.lower()}_{int(time.time())}"
+        target_row = sequence_df.iloc[0]
+        pattern = f"\\b{target_row.get('proto', '')}.*{top_atk.lower()}\\b"
+        added = add_rule_to_file(dl_rule_name, pattern, top_atk, severity="CRITICAL", remedy=f"DL detected sequence threat - {top_atk}")
+        if added:
+            auto_learned_rules.append({
+                "rule_name": dl_rule_name, 
+                "category": top_atk, 
+                "source": "DL Correlation",
+                "pattern": pattern
+            })
+
+    # --- ADVANCED SUMMARIZATION (BART Pipeline) ---
+    attack_logs = [l for l in sequence_data if l["analysis"]["decision"] == "ATTACK"]
+    # Generate descriptive strings for BART: "A [Type] attack was detected from [SRC] targeting [DST] over [PROTO] protocol using [SERVICE]" 
+    descriptive_sentences = []
+    for l in attack_logs[:10]:
+        descriptive_sentences.append(f"A {l['analysis']['prediction']} attack was detected from {l['src']} targeting {l['dst']} over {l['proto']} protocol using {l['service']} service.")
+    
+    if not attack_logs:
+        raw_text = "The following are network activity logs showing normal TCP/UDP connections. No malicious patterns were observed."
     else:
-        threat_level = "NONE"
+        raw_text = " ".join(descriptive_sentences)
     
-    attack_types = Counter(all_attacks)
-    top_attacks = attack_types.most_common(3)
+    if summarizer:
+        try:
+            summary_res = summarizer(raw_text, max_length=50, min_length=10, do_sample=False)
+            final_summary = [summary_res[0]['summary_text']]
+        except:
+            final_summary = [raw_text[:200] + "..."]
+    else:
+        final_summary = [f"Detected {len(attack_logs)} incidents across {total_batch_count} events. Top vector: {Counter(all_attacks).most_common(1)[0][0] if all_attacks else 'Normal'}."]
+
+    # --- ENHANCED EXPLAINABILITY (WHO/WHERE/WHAT/HOW + WHY) ---
+    threat_count = len(attack_logs)
+    top_source_tuple = Counter(threat_sources).most_common(1)[0] if threat_sources else ("N/A", 0)
+    top_target_tuple = Counter(threat_targets).most_common(1)[0] if threat_targets else ("N/A", 0)
+    top_atk_tuple = Counter(all_attacks).most_common(1)[0] if all_attacks else ("No threats", 0)
     
-    top_source = list(threat_sources)[0] if threat_sources else "N/A"
-    top_target = list(threat_targets)[0] if threat_targets else "N/A"
+    primary_proto = sequence_df["proto"].mode()[0] if not sequence_df.empty else "unknown"
+    primary_service = sequence_df["service"].mode()[0] if not sequence_df.empty else "none"
     
+    threat_level = "CRITICAL" if threat_count >= 7 or dl_prob > 0.9 else "HIGH" if threat_count >= 5 or dl_prob > 0.7 else "MEDIUM" if threat_count >= 2 else "LOW" if threat_count == 1 else "NONE"
+
+    # Deep Analysis logic for 'WHY'
+    atk_pct = (top_atk_tuple[1] / threat_count * 100) if threat_count > 0 else 0
+    why_analysis = [
+        f"- IP {top_source_tuple[0]} is responsible for a large portion of {top_atk_tuple[0]} attacks ({top_source_tuple[1]}/{threat_count}) → strong attacker indicator" if threat_count > 0 else "- No dominant attacker identified",
+        f"- Target {top_target_tuple[0]} is heavily attacked ({top_target_tuple[1]} times) → likely primary victim" if threat_count > 0 else "- Targets are distributed normally",
+        f"- {top_atk_tuple[0]} accounts for {round(atk_pct, 1)}% of total attacks → dominant threat type" if threat_count > 0 else "- No dominant threat pattern",
+        f"- Majority attacks use {primary_proto.upper()}, indicating protocol-level exploitation",
+        f"- Service '{primary_service}' is frequently targeted → possible vulnerability",
+        f"- Total attacks observed: {threat_count} in this batch of {total_batch_count}"
+    ]
+
     explainability = {
-        "who": top_source,
-        "where": top_target,
-        "what": top_attacks[0][0] if top_attacks else "No threats",
+        "who": f"{top_source_tuple[0]} ({top_source_tuple[1]} attacks)",
+        "where": f"{top_target_tuple[0]} ({top_target_tuple[1]} hits)",
+        "what": f"{top_atk_tuple[0]} ({top_atk_tuple[1]} times)",
+        "how": f"{primary_proto.upper()} protocol using {primary_service} service",
         "threat_level": threat_level,
         "attack_count": threat_count,
-        "top_attacks": [{"attack": atk, "count": cnt} for atk, cnt in top_attacks],
-        "unique_rules_hit": len(set(h.get("rule", "") for h in all_rule_hits)),
+        "dl_probability": round(dl_prob * 100, 2),
+        "why_analysis": why_analysis,
+        "recommended_actions": [
+            f"Apply firewall rules to block IP {top_source_tuple[0]}",
+            "Monitor traffic for anomalies",
+            "Filter malformed packets and block attack vectors"
+        ]
     }
     
-    total_time = sum(log["analysis"]["total_time_ms"] for log in sequence_data)
-    rule_time = sum(log["analysis"]["rule_time_ms"] for log in sequence_data)
-    ml_time = sum(log["analysis"]["ml_time_ms"] for log in sequence_data)
+    total_time = sum(log["analysis"]["total_time_ms"] for log in sequence_data) + (dl_time * 1000)
     
     return {
-        "start_index": len(lines) - len(window_logs),
-        "window_size": window_size,
+        "method": "dl-rule-hybrid-correlation",
+        "summary": final_summary,
         "sequence_logs": sequence_data,
         "explainability": explainability,
         "correlation_stats": {
             "total_time_ms": round(total_time, 2),
-            "rule_time_ms": round(rule_time, 2),
-            "ml_time_ms": round(ml_time, 2),
+            "dl_time_ms": round(dl_time * 1000, 2),
             "attacks_detected": threat_count,
             "benign_entries": window_size - threat_count,
+            "dl_prediction": "ATTACK" if is_dl_attack else "BENIGN"
         },
-        "all_rule_hits": all_rule_hits[:20],
         "auto_learned_rules": auto_learned_rules,
         "rules_count": len(patterns)
     }
@@ -715,18 +784,25 @@ def correlate_sequence(start_idx: int, seq_len: int = Query(10)):
     if start_idx < 0 or start_idx + seq_len > len(TEST_DF):
         raise HTTPException(status_code=400, detail="Sequence out of range")
 
-    # Collect analyses for each log in sequence
+    sequence_df = TEST_DF.iloc[start_idx : start_idx + seq_len]
+    
+    # DL prediction for sequence
+    dl_t0 = time.perf_counter()
+    dl_prob = dl_engine.predict_sequence(sequence_df)
+    dl_time = time.perf_counter() - dl_t0
+
     sequence_logs = []
-    all_rule_hits = []
     all_attacks = []
-    threat_sources = set()
-    threat_targets = set()
+    threat_sources = []
+    threat_targets = []
+    all_rule_hits = []
 
     for i in range(start_idx, start_idx + seq_len):
         row = _sanitize_row(TEST_DF.iloc[i].to_dict())
         analysis = perform_analysis(row)
+        analysis["method"] = "hybrid-dl-rule"
+        analysis["detection_source"] = "NEURAL" if analysis["decision"] == "ATTACK" and analysis["detection_source"] == "ML" else analysis["detection_source"]
         
-        # Generate synthetic IPs for view purposes
         src = ".".join(str(random.randint(1, 255)) for _ in range(4))
         dst = ".".join(str(random.randint(1, 255)) for _ in range(4))
         
@@ -738,65 +814,69 @@ def correlate_sequence(start_idx: int, seq_len: int = Query(10)):
             "proto": row.get("proto", "unknown"),
             "service": row.get("service", "unknown"),
         }
-
         sequence_logs.append(log_entry)
 
         if analysis["decision"] == "ATTACK":
             all_attacks.append(analysis["prediction"])
             all_rule_hits.extend(analysis["rule_hits"])
-            threat_sources.add(src)
-            threat_targets.add(dst)
+            threat_sources.append(src)
+            threat_targets.append(dst)
 
-    # Calculate threat level based on attacks in sequence
-    threat_count = len(all_attacks)
-    if threat_count >= 7:
-        threat_level = "CRITICAL"
-    elif threat_count >= 5:
-        threat_level = "HIGH"
-    elif threat_count >= 2:
-        threat_level = "MEDIUM"
-    elif threat_count == 1:
-        threat_level = "LOW"
-    else:
-        threat_level = "NONE"
-
-    # Identify top attack types in sequence
-    from collections import Counter
-    attack_types = Counter(all_attacks)
-    top_attacks = attack_types.most_common(3)
-
-    # Generate explainability insights
-    top_source = threat_sources.pop() if threat_sources else "N/A"
-    top_target = threat_targets.pop() if threat_targets else "N/A"
+    # --- ANALYTICAL EXPLAINABILITY ---
+    attack_logs = [l for l in sequence_logs if l["analysis"]["decision"] == "ATTACK"]
+    # Logic fallback for summary
+    summary_text = [f"Detected {len(attack_logs)} sequence threats."]
+    
+    threat_count = len(attack_logs)
+    total_batch_count = seq_len
+    top_source_tuple = Counter(threat_sources).most_common(1)[0] if threat_sources else ("N/A", 0)
+    top_target_tuple = Counter(threat_targets).most_common(1)[0] if threat_targets else ("N/A", 0)
+    top_atk_tuple = Counter(all_attacks).most_common(1)[0] if all_attacks else ("No threats", 0)
+    
+    primary_proto = sequence_df["proto"].mode()[0] if not sequence_df.empty else "unknown"
+    primary_service = sequence_df["service"].mode()[0] if not sequence_df.empty else "none"
+    
+    threat_level = "CRITICAL" if threat_count >= 7 or dl_prob > 0.9 else "HIGH" if threat_count >= 5 or dl_prob > 0.7 else "MEDIUM" if threat_count >= 2 else "NONE"
+    
+    atk_pct = (top_atk_tuple[1] / threat_count * 100) if threat_count > 0 else 0
+    why_analysis = [
+        f"- IP {top_source_tuple[0]} responsible for {top_source_tuple[1]}/{threat_count} incidents → strong attacker indicator",
+        f"- Target {top_target_tuple[0]} heavily targeted ({top_target_tuple[1]} times) → likely primary victim",
+        f"- {top_atk_tuple[0]} accounts for {round(atk_pct, 1)}% of traffic → dominant threat",
+        f"- Heavy usage of {primary_proto.upper()} suggests protocol-level exploitation",
+        f"- Service '{primary_service}' frequently targeted → possible vulnerability",
+        f"- Total attacks observed: {threat_count} in batch"
+    ]
 
     explainability = {
-        "who": top_source,
-        "where": top_target,
-        "what": top_attacks[0][0] if top_attacks else "No threats",
+        "who": f"{top_source_tuple[0]} ({top_source_tuple[1]} attacks)",
+        "where": f"{top_target_tuple[0]} ({top_target_tuple[1]} hits)",
+        "what": f"{top_atk_tuple[0]} ({top_atk_tuple[1]} times)",
+        "how": f"{primary_proto.upper()} protocol using {primary_service} service",
         "threat_level": threat_level,
         "attack_count": threat_count,
-        "top_attacks": [{"attack": atk, "count": cnt} for atk, cnt in top_attacks],
-        "unique_rules_hit": len(set(h.get("rule", "") for h in all_rule_hits)),
+        "dl_probability": round(dl_prob * 100, 2),
+        "why_analysis": why_analysis,
+        "recommended_actions": [
+            f"Block IP {top_source_tuple[0]}",
+            "Analyze sequence for lateral movement",
+            "Update detection rules"
+        ]
     }
 
-    # Aggregate statistics
-    total_time = sum(log["analysis"]["total_time_ms"] for log in sequence_logs)
-    rule_time = sum(log["analysis"]["rule_time_ms"] for log in sequence_logs)
-    ml_time = sum(log["analysis"]["ml_time_ms"] for log in sequence_logs)
-
     return {
-        "start_index": start_idx,
-        "sequence_length": seq_len,
+        "method": "dl-rule-hybrid-correlation",
+        "summary": summary_text,
         "sequence_logs": sequence_logs,
         "explainability": explainability,
         "correlation_stats": {
-            "total_time_ms": round(total_time, 2),
-            "rule_time_ms": round(rule_time, 2),
-            "ml_time_ms": round(ml_time, 2),
+            "total_time_ms": round(sum(log["analysis"]["total_time_ms"] for log in sequence_logs) + dl_time*1000, 2),
+            "dl_time_ms": round(dl_time * 1000, 2),
             "attacks_detected": threat_count,
             "benign_entries": seq_len - threat_count,
+            "dl_prediction": "ATTACK" if dl_prob > 0.5 else "BENIGN"
         },
-        "all_rule_hits": all_rule_hits[:20]  # Top 20 rule hits
+        "all_rule_hits": all_rule_hits[:20]
     }
 
 

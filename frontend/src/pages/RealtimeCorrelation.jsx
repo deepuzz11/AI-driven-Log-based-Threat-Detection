@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
-import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2 } from 'lucide-react'
+import { Play, Square, Zap, BarChart3, TrendingUp, RefreshCw, AlertTriangle, CheckCircle2, X, Loader2, Search } from 'lucide-react'
 import SequenceViewer from '../components/SequenceViewer'
 import CorrelationInsights from '../components/CorrelationInsights'
 import SequenceExplainability from '../components/SequenceExplainability'
@@ -131,15 +131,15 @@ export default function RealtimeCorrelation() {
                 ), { duration: 3000 })
             }
 
-            const threatLevel = data.explainability.threat_level
-            if (threatLevel !== 'NONE') {
+            const threatLevel = data?.explainability?.threat_level
+            if (threatLevel && threatLevel !== 'NONE') {
                 toast.custom((t) => (
                     <div className="custom-toast error slide-down">
                         <div className="custom-toast-icon"><AlertTriangle size={18} /></div>
                         <div className="custom-toast-content">
                             <div className="custom-toast-title">{threatLevel} Threat Detected</div>
                             <div className="custom-toast-message">
-                                {data.explainability.attack_count} malicious entries in stream
+                                {data?.explainability?.attack_count || 0} malicious entries in stream
                             </div>
                         </div>
                         <button className="custom-toast-close" onClick={() => toast.dismiss(t.id)}><X size={14} /></button>
@@ -273,8 +273,8 @@ export default function RealtimeCorrelation() {
                                                 Category: <strong>{rule.category}</strong>
                                             </div>
                                             <div className="rule-pattern" title={rule.pattern}>
-                                                {rule.pattern.substring(0, 80)}
-                                                {rule.pattern.length > 80 ? '...' : ''}
+                                                {(rule.pattern || "").substring(0, 80)}
+                                                {(rule.pattern || "").length > 80 ? '...' : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -335,6 +335,21 @@ export default function RealtimeCorrelation() {
                 {/* Correlation Results */}
                 {correlationData && (
                     <div className="results-section fade-in">
+                        {/* Executive Summary Section (NLP Powered) */}
+                        <div className="card summary-card" style={{ marginBottom: '24px', borderLeft: '4px solid var(--accent-purple)' }}>
+                            <div className="card-header" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', border: 'none' }}>
+                                <Search size={14} /> Summarizing last {(correlationData?.correlation_stats?.benign_entries || 0) + (correlationData?.correlation_stats?.attacks_detected || 0) || (correlationData?.sequence_logs?.length || 10)} logs...
+                            </div>
+                            <div className="card-body" style={{ fontSize: '15px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)', paddingTop: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+                                    <div style={{ color: 'var(--accent-pink)', fontWeight: 'bold', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <RefreshCw size={14} /> SUMMARY:
+                                    </div>
+                                </div>
+                                {Array.isArray(correlationData.summary) ? correlationData.summary[0] : correlationData.summary}
+                            </div>
+                        </div>
+
                         <CorrelationInsights
                             explainability={correlationData.explainability}
                             correlationStats={correlationData.correlation_stats}

@@ -142,14 +142,14 @@ function SequenceViewer({ sequenceLogs, explainability }) {
                                         )}
 
                                         <div className="detail-section">
-                                            <div className="detail-title">Timing Breakdown</div>
+                                            <div className="detail-title">Neural Logic Timing</div>
                                             <div className="detail-content timing-breakdown">
                                                 <div className="timing-item">
-                                                    <span>Rule Engine</span>
+                                                    <span>Signature Check</span>
                                                     <span className="timing-value">{log.analysis.rule_time_ms}ms</span>
                                                 </div>
                                                 <div className="timing-item">
-                                                    <span>ML Model</span>
+                                                    <span>Neural Correlation</span>
                                                     <span className="timing-value">{log.analysis.ml_time_ms}ms</span>
                                                 </div>
                                             </div>

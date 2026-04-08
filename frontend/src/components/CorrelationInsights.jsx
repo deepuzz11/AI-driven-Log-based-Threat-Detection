@@ -70,7 +70,7 @@ function CorrelationInsights({ explainability, correlationStats, ruleHits }) {
                         </div>
                     </div>
                     <div className="gauge-detail">
-                        {explainability.attack_count} of {correlationStats?.benign_entries + explainability.attack_count || 10} logs show malicious patterns
+                        {explainability.attack_count || 0} of {(correlationStats?.benign_entries || 0) + (explainability.attack_count || 0) || 10} logs show malicious patterns
                     </div>
                 </div>
 
@@ -101,11 +101,33 @@ function CorrelationInsights({ explainability, correlationStats, ruleHits }) {
                     </div>
 
                     <div className="explainability-item">
-                        <div className="expl-label">ACTION</div>
-                        <div className="expl-value">Block & Alert</div>
-                        <div className="expl-desc">Recommended response</div>
+                        <div className="expl-label">HOW</div>
+                        <div className="expl-value">
+                            {explainability.how || 'Protocol Anomaly'}
+                        </div>
+                        <div className="expl-desc">Attack Vector</div>
                     </div>
                 </div>
+
+                {/* WHY ANALYSIS */}
+                {explainability.why_analysis && (
+                    <div className="why-analysis-box" style={{ 
+                        background: 'rgba(0,0,0,0.2)', 
+                        padding: '16px', 
+                        borderRadius: '8px',
+                        marginBottom: '24px',
+                        border: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                        <div className="section-title" style={{ color: 'var(--accent-pink)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                             <Zap size={14} /> WHY ANALYSIS
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: '1.6' }}>
+                            {explainability.why_analysis.map((line, idx) => (
+                                <div key={idx} style={{ marginBottom: '4px' }}>{line}</div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Attack Distribution */}
                 {explainability.top_attacks && explainability.top_attacks.length > 0 && (
@@ -133,22 +155,24 @@ function CorrelationInsights({ explainability, correlationStats, ruleHits }) {
                     </div>
                 )}
 
-                {/* Correlation Stats */}
-                <div className="stats-grid">
+                {/* Correlation Multi-layered Stats */}
+                <div className="stats-grid" style={{ marginBottom: '24px' }}>
                     <div className="stat-item">
-                        <div className="stat-label">Total Analysis Time</div>
+                        <div className="stat-label">Total Sequence Analysis</div>
                         <div className="stat-value">{correlationStats?.total_time_ms}ms</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-label">Rule Engine Time</div>
-                        <div className="stat-value">{correlationStats?.rule_time_ms}ms</div>
+                        <div className="stat-label">Transformer Inference</div>
+                        <div className="stat-value" style={{ color: 'var(--accent-purple)' }}>{correlationStats?.dl_time_ms}ms</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-label">ML Model Time</div>
-                        <div className="stat-value">{correlationStats?.ml_time_ms}ms</div>
+                        <div className="stat-label">Neural Probability</div>
+                        <div className="stat-value" style={{ color: getThreatLevelColor(explainability.threat_level) }}>
+                            {explainability.dl_probability || '0.0'}%
+                        </div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-label">Attacks Detected</div>
+                        <div className="stat-label">Attack Events</div>
                         <div className="stat-value" style={{ color: 'var(--accent-red)' }}>
                             {explainability.attack_count}
                         </div>
