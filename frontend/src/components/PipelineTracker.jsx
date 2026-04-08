@@ -37,28 +37,32 @@ function PipelineTracker({ state, result }) {
     const getStatus = (key) => {
         if (state === 'idle') return 'STANDBY'
         if (state === 'step1' && key === 'rule') return 'SCANNING...'
-        if (state === 'step2') {
-            if (key === 'rule') return '✓ CLEAR'
-            if (key === 'ml') return 'ELABORATING...'
+        
+        // Rule Engine Check
+        if (key === 'rule') {
+            if (result && result.rule_hits && result.rule_hits.length > 0) return '✕ HIT DETECTED'
+            if (state === 'step1') return 'SCANNING...'
+            if (state === 'idle') return 'STANDBY'
+            return '✓ CLEAR'
         }
-        if (state === 'rule-hit' || (result && result.rule_hits && result.rule_hits.length > 0)) {
-            if (key === 'rule') return '✕ HIT DETECTED'
-            if (state === 'rule-hit') {
-                if (key === 'ml') return '⏭ SKIPPED'
-                if (key === 'out') return '🚨 ALERT RAISED'
-            }
+
+        // ML Engine Check
+        if (key === 'ml') {
+            if (state === 'step1') return 'READY'
+            if (state === 'step2') return 'ELABORATING...'
+            if (state === 'rule-hit') return '⏭ SKIPPED'
+            if (state === 'ml-attack') return '✕ ATTACK MATCH'
+            if (state === 'ml-benign') return '✓ BENIGN'
+            return 'READY'
+        }
+
+        // Output Check
+        if (key === 'out') {
+            if (state === 'rule-hit' || state === 'ml-attack') return '🚨 ALERT RAISED'
+            if (state === 'ml-benign') return '✓ AUTHORIZED'
+            return 'READY'
         }
         
-        if (state === 'ml-attack') {
-            if (key === 'ml') return '✕ ATTACK MATCH'
-            if (key === 'out') return '🚨 ALERT RAISED'
-            if (key === 'rule') return '✓ CLEAR'
-        }
-        if (state === 'ml-benign') {
-            if (key === 'ml') return '✓ BENIGN'
-            if (key === 'out') return '✓ AUTHORIZED'
-            if (key === 'rule') return '✓ CLEAR'
-        }
         return 'READY'
     }
 

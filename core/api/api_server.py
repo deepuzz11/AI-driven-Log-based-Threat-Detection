@@ -153,13 +153,16 @@ def load_rules():
 def rule_based_check(log_line):
     """Check log line against all rules and return matches"""
     matches = []
+    log_line_lower = log_line.lower()
     for name, pattern in patterns.items():
         try:
-            if pattern.search(log_line):
+            if pattern.search(log_line_lower):
+                print(f"[RULE ENGINE] HIT detected for rule: {name}")
                 try:
-                    matches.append({"rule": name, **rule_meta[name]})
+                    category = rule_meta[name].get("category", "Unknown")
+                    matches.append({"rule_name": name, "category": category, **rule_meta[name]})
                 except KeyError:
-                    matches.append({"rule": name, "category": "unknown", "severity": "MEDIUM", "remedy": ""})
+                    matches.append({"rule_name": name, "category": "unknown", "severity": "MEDIUM", "remedy": ""})
         except Exception as e:
             pass
     return matches
@@ -177,7 +180,19 @@ def add_rule_to_file(rule_name, regex, category, severity="HIGH",
         return False
     
     try:
+        # Read file to check if it ends with newline
+        needs_newline = False
+        try:
+            with open(RULE_FILE, "r", encoding="utf-8") as f:
+                content = f.read()
+                if content and not content.endswith("\n"):
+                    needs_newline = True
+        except FileNotFoundError:
+            pass
+        
         with open(RULE_FILE, "a", encoding="utf-8") as f:
+            if needs_newline:
+                f.write("\n")
             # Write in tuple format - escape quotes properly
             safe_regex = regex.replace('"', '\\"')
             f.write(f'("{rule_name}", r"{safe_regex}", "{category}"),\n')
@@ -224,17 +239,35 @@ def build_log_string_industry(row):
         return generate_firewall_log(row)
 
 def build_log_string(row):
-    """Generate descriptive text for rule matching"""
+    """Generate descriptive text for rule matching.
+    Includes technical telemetry (TTL, bytes, packets) to allow auto-rules
+    to be more granular and specific.
+    """
     proto = str(row.get("proto", "")).lower()
     service = str(row.get("service", "-")).lower().replace("-", "")
     state = str(row.get("state", "")).lower()
     attack_cat = str(row.get("attack_cat", "Unknown")).strip()
     
-    text_parts = []
-    if proto: text_parts.append(proto)
-    if service and service != "-": text_parts.append(service)
-    if state: text_parts.append(state)
+    # Technical features for granular rule matching
+    sbytes = row.get("sbytes", 0)
+    dbytes = row.get("dbytes", 0)
+    sttl = row.get("sttl", 0)
+    dttl = row.get("dttl", 0)
+    spkts = row.get("spkts", 0)
+    dpkts = row.get("dpkts", 0)
     
+    text_parts = []
+    # 1. Core Network Identity
+    if proto: text_parts.append(f"proto:{proto}")
+    if service and service != "-" and service.strip(): text_parts.append(f"service:{service}")
+    if state: text_parts.append(f"state:{state}")
+    
+    # 2. Technical Telemetry (for granular auto-rules)
+    text_parts.append(f"ttl:{sttl},{dttl}")
+    text_parts.append(f"bytes:{sbytes},{dbytes}")
+    text_parts.append(f"pkts:{spkts},{dpkts}")
+    
+    # 3. Ground-Truth Descriptors (for legacy category rules)
     matched = False
     for key, (category_kw, description) in ATTACK_CATEGORY_MAP.items():
         if key.lower() == attack_cat.lower():
@@ -247,9 +280,10 @@ def build_log_string(row):
         text_parts.append(f"{attack_cat.lower()} attack detected")
     
     if attack_cat.lower() in ["normal", "benign", "none"]:
-        text_parts = ["benign", "normal", "no threat detected"]
+        text_parts.append("benign")
+        text_parts.append("normal")
     
-    return " ".join(text_parts)
+    return " ".join(text_parts).lower()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -469,31 +503,45 @@ def perform_analysis(row):
     # Auto-learning logic: if ML detects attack but rules don't
     auto_rule_added = False
     new_rule_name = None
-    if is_attack_ml and not is_attack_rule:
-        attack_type = pred_ml.lower().replace(" ", "_").replace("-", "_")
-        new_rule_name = f"auto_learned_{attack_type}_{int(time.time())}"
+    if is_attack_ml and not is_attack_rule and conf_ml and conf_ml > 70:
+        # Sanitize attack type for rule name and pattern
+        attack_type = pred_ml.lower().replace(" ", "_").replace("-", "_").replace("/", "_")
         
-        # Build regex pattern from row data
-        proto = str(row.get("proto", "")).upper()
+        # Check if we already have a rule for this exact telemetry signature
+        proto = str(row.get("proto", "")).lower()
         service = str(row.get("service", "")).lower()
         state = str(row.get("state", "")).lower()
         
-        # Create a hybrid pattern
-        pattern_parts = []
-        if proto: pattern_parts.append(re.escape(proto))
-        if service and service != "-" and service != "none": pattern_parts.append(re.escape(service))
-        if state and state != "-" and state != "none": pattern_parts.append(re.escape(state))
+        # Build a robust signature key to avoid near-duplicate rules
+        sbytes_approx = (row.get("sbytes", 0) // 100) * 100
+        sig_key = f"{proto}_{service}_{state}_{sbytes_approx}_{attack_type}"
+        existing_sig = any(sig_key in name for name in patterns.keys())
         
-        if pattern_parts:
-            pattern = ".*".join(pattern_parts)
-            added = add_rule_to_file(
-                new_rule_name,
-                pattern,
-                pred_ml,
-                severity="HIGH",
-                remedy=f"Auto-learned from ML hybrid detection - {pred_ml}"
-            )
-            auto_rule_added = added
+        if not existing_sig:
+            new_rule_name = f"auto_{attack_type}_{int(time.time()) % 100000}"
+            
+            # Create a precise pattern using technical markers
+            pattern_parts = []
+            if proto: pattern_parts.append(f"proto:{re.escape(proto)}")
+            if service and service not in ("-", "none", "", " "): 
+                pattern_parts.append(f"service:{re.escape(service)}")
+            if state and state not in ("-", "none", "", " "): 
+                pattern_parts.append(f"state:{re.escape(state)}")
+            
+            if len(pattern_parts) >= 1:
+                pattern = ".*".join(pattern_parts)
+                added = add_rule_to_file(
+                    new_rule_name,
+                    pattern,
+                    pred_ml,
+                    severity="HIGH",
+                    remedy=f"Auto-learned from ML hybrid detection - Predicted Category: {pred_ml}"
+                )
+                auto_rule_added = added
+                if added:
+                    print(f"[HYBRID] New rule successfully learned: {new_rule_name} -> {pattern}")
+                    # Re-load to ensure it can hit immediately if needed (though add_rule_to_file already calls it)
+                    load_rules()
 
     # Final decision strategy: Combined
     decision = "BENIGN"

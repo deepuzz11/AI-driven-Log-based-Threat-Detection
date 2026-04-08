@@ -66,7 +66,7 @@ export default function Integrations() {
                             className={`card glass-panel slide-up stagger-${idx + 2}`}
                             style={{
                                 padding: '28px',
-                                borderRadius: '16px',
+                                borderRadius: 'var(--radius-lg)',
                                 position: 'relative',
                                 display: 'flex',
                                 flexDirection: 'column',

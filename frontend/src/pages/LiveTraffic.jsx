@@ -215,7 +215,7 @@ export default function LiveTraffic() {
                 background: 'rgba(5, 5, 7, 0.85)',
                 backdropFilter: 'blur(32px) saturate(180%)',
                 border: '1px solid var(--border-bright)',
-                borderRadius: '16px'
+                borderRadius: 'var(--radius-lg)'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
                     <div>
@@ -587,7 +587,7 @@ export default function LiveTraffic() {
                     border: 1px solid var(--border-bright);
                     color: #fff;
                     padding: 10px 18px;
-                    border-radius: 10px;
+                    border-radius: var(--radius);
                     font-size: 12px;
                     font-weight: 700;
                     cursor: pointer;

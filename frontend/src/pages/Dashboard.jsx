@@ -120,7 +120,8 @@ export default function Dashboard() {
             const data = await r.json()
             setResult(data) // Inform the pipeline immediately
 
-            if (data.method === 'rule-based') {
+            // Determine pipeline flow based on detection source
+            if (data.detection_source === 'RULE') {
                 setPipelineState('rule-hit')
             } else {
                 setPipelineState('step2')

@@ -34,6 +34,13 @@
   /* Command Glows */
   --shadow-CORE: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(59, 130, 246, 0.1);
   --transition-CORE: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Radius System - Curved Boxes */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
 }
 
 body {
@@ -58,7 +65,7 @@ h1, h2, h3, h4, .text-gradient {
   background: var(--glass-bg);
   backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   transition: var(--transition-CORE);
   position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -358,7 +365,7 @@ html {
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
@@ -745,6 +752,7 @@ html {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
 }
 
 .card-header {

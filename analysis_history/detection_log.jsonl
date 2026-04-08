@@ -99,3 +99,14 @@
 {"timestamp": "2026-04-08T18:16:48.502119", "sample_index": 78990, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
 {"timestamp": "2026-04-08T18:18:50.175075", "sample_index": 78990, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
 {"timestamp": "2026-04-08T18:19:15.266427", "sample_index": 78990, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T18:55:47.830295", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T18:55:49.401287", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T18:58:22.301041", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T18:58:24.990437", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:01:24.828047", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:01:27.514619", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:03:42.461863", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:03:44.132190", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:04:20.775541", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:04:22.911925", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
+{"timestamp": "2026-04-08T19:08:36.004484", "sample_index": 72654, "attack_type": "Recon/Scanning", "method": "ml-rule-hybrid", "rules_matched": 0}
